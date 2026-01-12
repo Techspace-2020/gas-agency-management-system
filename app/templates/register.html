@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Veena Indane{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)),
+                    url("{{ url_for('static', filename='refinery_bg.jpg') }}");
+        background-size: 100% 100%;
+        background-position: center top;
+        background-attachment: fixed;
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .reg-wrapper {
+        flex: 1 0 auto;
+        padding-top: 30px;
+        padding-right: 80px;
+    }
+
+    .reg-card {
+        width: 100%;
+        max-width: 480px;
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .iocl-logo-top {
+        max-width: 300px;
+        height: auto;
+        margin-bottom: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .footer-den {
+        background: rgba(0, 0, 0, 0.85);
+        color: #ffffff;
+        text-align: center;
+        padding: 15px 0;
+        width: 100%;
+
+        font-size: 0.85rem;
+        border-top: 2px solid #ff4500;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="container-fluid reg-wrapper d-flex justify-content-end align-items-start">
+    <div class="text-center">
+        <img src="{{ url_for('static', filename='iocl_logo.jpg') }}" alt="IOCL Logo" class="iocl-logo-top shadow-lg">
+
+        <div class="card reg-card bg-white overflow-hidden text-start">
+            <div class="card-header text-white text-center py-3" style="background-color: #ff4500;">
+                <h3 class="fw-bold mb-0">Operator Registration</h3>
+            </div>
+            <div class="card-body p-4">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}{% for category, message in messages %}
+                        <div class="alert alert-{{ category }} text-center small shadow-sm">
+                            {{ message }}
+                            {% if category == 'success' %}
+                                <div class="mt-2"><a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-primary shadow-sm">BACK TO LOGIN</a></div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}{% endif %}
+                {% endwith %}
+
+                {% if not get_flashed_messages(category_filter=['success']) %}
+                <form method="POST">
+                    <div class="mb-2">
+                        <label class="form-label fw-bold text-secondary small">Full Name</label>
+                        <input type="text" name="full_name" class="form-control" placeholder="Enter full name" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold text-secondary small">Username</label>
+                        <input type="text" name="username" class="form-control" placeholder="Choose username" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold text-secondary small">Password</label>
+                        <div class="input-group">
+                            <input type="password" name="password" id="r1" class="form-control" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggle('r1')"><i class="bi bi-eye"></i></button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary small">Confirm Password</label>
+                        <div class="input-group">
+                            <input type="password" name="confirm_password" id="r2" class="form-control" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggle('r2')"><i class="bi bi-eye"></i></button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm" style="background-color: #003399; border: none;">SUBMIT FOR APPROVAL</button>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('auth.login') }}" class="small text-decoration-none fw-bold" style="color: #0000ff;">Back to Login</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer-den">
+    <div class="container">
+        <p class="mb-1">Copyright© 2025-2026 DeveloperDen.co.in. All Rights Reserved.</p>
+        <p class="mb-0">Developed by <strong>Developers Den</strong> | Contact: 9585234180, 7829749964</p>
+    </div>
+</footer>
+
+<script>
+    function toggle(id) {
+        const x = document.getElementById(id);
+        x.type = x.type === "password" ? "text" : "password";
+    }
+</script>
+{% endblock %}

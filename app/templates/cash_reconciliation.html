@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Cash Reconciliation - Veena Indane{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <h2 class="fw-bold">Step 3: Final Cash Reconciliation</h2>
+    <span class="badge bg-dark fs-6">Stock Date: {{ stock_date }}</span>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ category if category != 'error' else 'danger' }} shadow-sm">
+            {{ message }}
+        </div>
+    {% endfor %}{% endif %}
+{% endwith %}
+
+<div class="card shadow-sm border-0 p-4 mb-4">
+    <form method="POST">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle text-end">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th class="text-start">Delivery Boy Name</th>
+                        <th>Opening Balance</th>
+                        <th>Expected Today</th>
+                        <th>Deposited Today</th>
+                        <th class="bg-warning text-dark border-warning">Closing Balance</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    {% set closing_val = row.opening_bal + row.expected_bal - row.deposited_bal %}
+                    <tr>
+                        <td class="text-start fw-bold">{{ row.name }}</td>
+                        <td class="text-muted">₹{{ "{:,.2f}".format(row.opening_bal) }}</td>
+                        <td>₹{{ "{:,.2f}".format(row.expected_bal) }}</td>
+                        <td>₹{{ "{:,.2f}".format(row.deposited_bal) }}</td>
+                        <td class="fw-bold table-light {% if closing_val != 0 %}text-danger{% endif %}">
+                            ₹{{ "{:,.2f}".format(closing_val) }}
+                        </td>
+                        <td class="text-center">
+                            {% if row.balance_status == 'SETTLED' %}
+                                <span class="badge bg-success px-3">SETTLED</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark px-3">PENDING</span>
+                            {% endif %}
+                        </td>
+                        <input type="hidden" name="opening_{{ row.delivery_boy_id }}" value="{{ row.opening_bal }}">
+                        <input type="hidden" name="expected_{{ row.delivery_boy_id }}" value="{{ row.expected_bal }}">
+                        <input type="hidden" name="deposited_{{ row.delivery_boy_id }}" value="{{ row.deposited_bal }}">
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold shadow"
+                    {% if has_updated %}disabled{% endif %}>
+                {% if has_updated %}
+                    <i class="bi bi-check-circle-fill me-2"></i>BALANCES UPDATED
+                {% else %}
+                    <i class="bi bi-save me-2"></i>UPDATE BALANCES
+                {% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="d-flex justify-content-between align-items-center">
+    <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">
+        <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+    </a>
+
+    {% if has_updated %}
+        <a href="{{ url_for('cash_reconciliation.day_close') }}"
+           class="btn btn-danger btn-lg px-5 fw-bold shadow"
+           onclick="return confirm('CLOSE DAY? Remaining balances will carry forward to the next day.')">
+            FINALIZE & CLOSE DAY <i class="bi bi-power ms-2"></i>
+        </a>
+    {% else %}
+        <button class="btn btn-secondary btn-lg px-5 fw-bold shadow" disabled>
+            FINALIZE & CLOSE DAY <i class="bi bi-lock-fill ms-2"></i>
+        </button>
+    {% endif %}
+</div>
+{% endblock %}

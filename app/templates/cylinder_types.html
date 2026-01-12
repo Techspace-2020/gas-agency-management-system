@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cylinder Types Master</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .sidebar { background: #212529; min-height: 100vh; color: white; padding: 20px; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px; border-radius: 5px; margin-bottom: 5px; }
+        .sidebar a:hover, .sidebar a.active { background: #343a40; color: white; }
+        .card { border: none; border-radius: 12px; }
+        .category-badge { font-size: 0.75rem; padding: 5px 10px; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-light">
+
+{% extends "base.html" %}
+
+{% block title %}Cylinder Types - Veena Indane{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0">Cylinder Types Master</h2>
+        <p class="text-muted">Manage stock categories and cylinder codes.</p>
+    </div>
+    <a href="{{ url_for('cylinder_types.download_cylinder_types') }}" class="btn btn-dark shadow-sm">
+        <i class="bi bi-download me-2"></i>Export CSV
+    </a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+<!--                    <th class="ps-4">ID</th>-->
+                    <th>Cylinder Code</th>
+                    <th>Category</th>
+                    <th class="text-end pe-4">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in cylinder_types %}
+                <tr>
+<!--                    <td class="ps-4 text-muted">#{{ c.cylinder_type_id }}</td>-->
+                    <td><span class="fw-bold">{{ c.code }}</span></td>
+                    <td>
+                        <span class="badge {{ 'bg-info text-dark' if c.category == 'DOMESTIC' else 'bg-warning text-dark' }}">
+                            {{ c.category }}
+                        </span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <span class="text-success small fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Active</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+</body>
+</html>

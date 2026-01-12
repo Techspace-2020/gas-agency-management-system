@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Veena Indane{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)),
+                    url("{{ url_for('static', filename='refinery_bg.jpg') }}");
+        background-size: 100% 100%;
+        background-position: center top;
+        background-attachment: fixed;
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .login-wrapper {
+        flex: 1 0 auto;
+        padding-top: 40px;
+        padding-right: 80px;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 480px;
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .iocl-logo-top {
+        max-width: 300px;
+        height: auto;
+        margin-bottom: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .footer-den {
+        background: rgba(0, 0, 0, 0.85);
+        color: #ffffff;
+        text-align: center;
+        padding: 15px 0;
+        width: 100%;
+        font-size: 0.85rem;
+        border-top: 2px solid #ff4500;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="container-fluid login-wrapper d-flex justify-content-end align-items-start">
+    <div class="text-center">
+        <img src="{{ url_for('static', filename='iocl_logo.jpg') }}" alt="IOCL Logo" class="iocl-logo-top shadow-lg">
+
+        <div class="card login-card bg-white overflow-hidden text-start">
+            <div class="card-header text-white text-center py-3" style="background-color: #ff4500;">
+                <h3 class="fw-bold mb-0">Operator Login</h3>
+            </div>
+            <div class="card-body p-4">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}{% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'error' else 'danger' }} small shadow-sm">
+                            {{ message }}
+                        </div>
+                    {% endfor %}{% endif %}
+                {% endwith %}
+
+                <form method="POST" id="loginForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Username</label>
+                        <input type="text" id="username" name="username" class="form-control form-control-lg" placeholder="Enter username" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Password</label>
+                        <input type="password" id="password" name="password" class="form-control form-control-lg" placeholder="Enter password" required>
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="rememberMe">
+                        <label class="form-check-label small text-secondary fw-bold" for="rememberMe">Remember Me</label>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm" style="background-color: #003399; border: none;">
+                            LOGIN
+                        </button>
+                    </div>
+                    <div class="text-center">
+                        <p class="mb-0 small text-muted">New Operator?
+                            <a href="{{ url_for('auth.register') }}" class="text-decoration-none fw-bold" style="color: #0000ff;">Register for Approval</a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer-den">
+    <div class="container">
+        <p class="mb-1">Copyright© 2025-2026 DeveloperDen.co.in. All Rights Reserved.</p>
+        <p class="mb-0">Developed by <strong>Developers Den</strong> | Contact: 9585234180, 7829749964</p>
+    </div>
+</footer>
+
+<script>
+    const loginForm = document.getElementById('loginForm');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const rememberMeCheckbox = document.getElementById('rememberMe');
+
+    // 1. On page load, check if credentials exist in localStorage
+    window.onload = () => {
+        const savedUser = localStorage.getItem('vi_user');
+        const savedPass = localStorage.getItem('vi_pass');
+
+        if (savedUser && savedPass) {
+            usernameInput.value = savedUser;
+            passwordInput.value = savedPass;
+            rememberMeCheckbox.checked = true;
+        }
+    };
+
+    // 2. On form submit, save or clear credentials
+    loginForm.addEventListener('submit', () => {
+        if (rememberMeCheckbox.checked) {
+            localStorage.setItem('vi_user', usernameInput.value);
+            localStorage.setItem('vi_pass', passwordInput.value);
+        } else {
+            localStorage.removeItem('vi_user');
+            localStorage.removeItem('vi_pass');
+        }
+    });
+</script>
+
+{% endblock %}

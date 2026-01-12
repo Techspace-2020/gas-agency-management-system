@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Start Work Day - Veena Indane{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <div class="mb-3">
+            <i class="bi bi-calendar-plus text-success" style="font-size: 4rem;"></i>
+        </div>
+        <h1 class="fw-bold">Initialize Stock Day</h1>
+        <p class="text-muted fs-5">Select the working date to begin your daily stock and cash entries.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}{% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} shadow-sm">
+                        {{ message }}
+                    </div>
+                {% endfor %}{% endif %}
+            {% endwith %}
+
+            <div class="card shadow-lg border-0 p-4" style="border-radius: 20px;">
+                <div class="card-body">
+                    <h5 class="fw-bold text-center mb-4">Create New Working Day</h5>
+                    <form method="POST">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Working Date</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-calendar-event"></i></span>
+                                <input type="date"
+                                       name="stock_date"
+                                       class="form-control form-control-lg"
+                                       value="{{ next_available_date }}"
+                                       max="{{ today }}"
+                                       required>
+                            </div>
+                            <small class="text-muted mt-2 d-block text-center">Future dates are disabled.</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100 fw-bold py-3 shadow">
+                            <i class="bi bi-check-circle-fill me-2"></i>CONFIRM AND START
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK TO DASHBOARD</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body { background-color: #f8f9fa; }
+    .card { transition: transform 0.2s; }
+    .card:hover { transform: translateY(-5px); }
+</style>
+{% endblock %}

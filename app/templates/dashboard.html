@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 fw-bold">Daily Operations</h1>
+        {% if day %}
+            <span class="badge {% if is_day_closed %}bg-danger{% else %}bg-primary{% endif %} fs-6 py-2 px-3">
+                {{ day.status }} - {{ day.stock_date }}
+            </span>
+        {% endif %}
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'error' else 'danger' }} shadow-sm flash-message">
+                {{ message }}
+            </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    {% if day and is_day_closed %}
+    <div class="row justify-content-center py-4 mb-5">
+        <div class="col-md-10">
+            <div class="card shadow-lg border-0 p-5 text-center" style="border-radius: 15px;">
+                <div class="mb-4"><i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i></div>
+                <h2 class="fw-bold">Stock & Money Updated!</h2>
+                <p class="text-muted fs-5 mb-4">Records for {{ day.stock_date }} are finalized.</p>
+
+                <div class="d-grid gap-2 col-md-6 mx-auto">
+                    <a href="{{ url_for('stock_day.create_new_day') }}" class="btn btn-primary btn-lg fw-bold">START NEW DAY</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% elif day %}
+    <h4 class="fw-bold mb-3 text-secondary border-bottom pb-2">Stock Handling</h4>
+    <div class="row g-3 mb-5">
+        {% set stock_steps = [
+            {'key': 'opening_stock', 'title': '1. Opening Stock', 'url': 'opening_stock.summary_view', 'req': None},
+            {'key': 'iocl_movements', 'title': '2. IOCL Movements', 'url': 'iocl_movements.iocl_view', 'req': 'opening_stock'},
+            {'key': 'deliveries', 'title': '3. Delivery Issues', 'url': 'delivery_transactions.transactions_view', 'req': 'iocl_movements'},
+            {'key': 'finalized_stock', 'title': '4. Reconciliation', 'url': 'closing_stock.closing_view', 'req': 'deliveries'}
+        ] %}
+        {% for s in stock_steps %}
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 p-3">
+                <h6 class="fw-bold text-primary small mb-2">{{ s.title }}</h6>
+                {% set is_locked = s.req and not progress[s.req] %}
+                {% if is_locked %}
+                    <button class="btn btn-sm mt-auto btn-secondary disabled" style="opacity: 0.6;"><i class="bi bi-lock-fill me-1"></i> Locked</button>
+                {% elif progress[s.key] %}
+                    <a href="{{ url_for(s.url) }}" class="btn btn-sm mt-auto btn-success"><i class="bi bi-check-lg me-1"></i> Completed</a>
+                {% else %}
+                    <a href="{{ url_for(s.url) }}" class="btn btn-sm mt-auto btn-primary">Start</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h4 class="fw-bold mb-3 text-secondary border-bottom pb-2">Cash Handling</h4>
+    <div class="row g-3 mb-5">
+        {% set cash_steps = [
+            {'key': 'expected_cash', 'title': '1. Expected Cash', 'url': 'cash_settlement.cash_view', 'req': 'finalized_stock'},
+            {'key': 'cash_collection', 'title': '2. Cash Collection', 'url': 'cash_collection.collection_view', 'req': 'expected_cash'},
+            {'key': 'reconciled_cash', 'title': '3. Settle Balances', 'url': 'cash_reconciliation.reconciliation_view', 'req': 'cash_collection'}
+        ] %}
+        {% for c in cash_steps %}
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100 p-3 border-start border-4 border-success">
+                <h6 class="fw-bold text-success small mb-2">{{ c.title }}</h6>
+                {% set is_locked_cash = c.req and not progress[c.req] %}
+                {% if is_locked_cash %}
+                    <button class="btn btn-sm mt-auto btn-secondary disabled" style="opacity: 0.6;"><i class="bi bi-lock-fill me-1"></i> Locked</button>
+                {% elif progress[c.key] %}
+                    <a href="{{ url_for(c.url) }}" class="btn btn-sm mt-auto btn-success"><i class="bi bi-check-lg me-1"></i> Completed</a>
+                {% else %}
+                    <a href="{{ url_for(c.url) }}" class="btn btn-sm mt-auto btn-primary">Start</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm border-0 mt-4 mb-5">
+        <div class="card-header bg-dark text-white p-3">
+            <h5 class="mb-0 fw-bold">Past Records & Reports</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-6 border-end">
+                    <h6 class="fw-bold text-primary mb-3">Stock Report</h6>
+                    <form action="{{ url_for('stock_day.generate_report') }}" method="POST" class="row g-2 align-items-end">
+                        <input type="hidden" name="report_type" value="stock">
+                        <div class="col-sm-7">
+                            <label class="small text-muted mb-1">Select Date</label>
+                            <input type="date" name="selected_date" class="form-control" required>
+                        </div>
+                        <div class="col-sm-5">
+                            <button type="submit" class="btn btn-outline-primary w-100 fw-bold">Generate Stock</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="col-md-6 ps-md-4">
+                    <h6 class="fw-bold text-success mb-3">Cash Report</h6>
+                    <form action="{{ url_for('stock_day.generate_report') }}" method="POST" class="row g-2 align-items-end">
+                        <input type="hidden" name="report_type" value="cash">
+                        <div class="col-sm-7">
+                            <label class="small text-muted mb-1">Select Date</label>
+                            <input type="date" name="selected_date" class="form-control" required>
+                        </div>
+                        <div class="col-sm-5">
+                            <button type="submit" class="btn btn-outline-success w-100 fw-bold">Generate Cash</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Wait 3 seconds, then fade out
+        setTimeout(function() {
+            const messages = document.querySelectorAll('.flash-message');
+            messages.forEach(function(msg) {
+                // Use Bootstrap's built-in transition if available, or manual fade
+                msg.style.transition = "opacity 0.6s ease";
+                msg.style.opacity = "0";
+                setTimeout(() => msg.remove(), 600);
+            });
+        }, 1500); // 3000ms = 3 seconds
+    });
+</script>
+{% endblock %}

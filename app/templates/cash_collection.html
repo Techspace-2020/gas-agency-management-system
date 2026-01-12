@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold text-center">Step 2: Cash Collection – {{ stock_date }}</h2>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ category }} shadow-sm">{{ message }}</div>
+    {% endfor %}{% endif %}
+{% endwith %}
+
+<div class="card shadow-sm border-0 p-4 mb-4">
+    <form method="POST">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-start">Delivery Boy</th>
+                        <th>Cash (₹)</th>
+                        <th>UPI (₹)</th>
+                        <th>Total (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entity in entities %}
+                    {% set saved = saved_map.get(entity.delivery_boy_id) %}
+                    <tr>
+                        <td class="text-start fw-bold">{{ entity.name }}</td>
+                        <td>
+                            <input type="number" step="0.01" class="form-control text-center"
+                                   id="cash_{{ entity.delivery_boy_id }}" name="cash_{{ entity.delivery_boy_id }}"
+                                   value="{{ saved.cash_amount if saved else 0 }}"
+                                   oninput="updateRow('{{ entity.delivery_boy_id }}')" {% if is_locked %} readonly {% endif %}>
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" class="form-control text-center"
+                                   id="upi_{{ entity.delivery_boy_id }}" name="upi_{{ entity.delivery_boy_id }}"
+                                   value="{{ saved.upi_amount if saved else 0 }}"
+                                   oninput="updateRow('{{ entity.delivery_boy_id }}')" {% if is_locked %} readonly {% endif %}>
+                        </td>
+                        <td class="bg-light fw-bold fs-5">₹<span id="total_{{ entity.delivery_boy_id }}">{{ "{:.2f}".format(saved.total_deposited if saved else 0.00) }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-center mt-3">
+            <button type="submit" class="btn btn-success btn-lg px-5 fw-bold shadow" {% if is_locked %} disabled {% endif %}>
+                {% if is_locked %} <i class="bi bi-check-circle-fill me-2"></i>COLLECTION LOCKED {% else %} <i class="bi bi-save me-2"></i>SAVE COLLECTION {% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="d-flex justify-content-start align-items-center">
+    <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4 shadow-sm">
+        <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+    </a>
+</div>
+
+<script>
+    function updateRow(id) {
+        const cash = parseFloat(document.getElementById('cash_' + id).value) || 0;
+        const upi = parseFloat(document.getElementById('upi_' + id).value) || 0;
+        document.getElementById('total_' + id).innerText = (cash + upi).toFixed(2);
+    }
+</script>
+{% endblock %}

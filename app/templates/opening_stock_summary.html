@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head><title>Opening Stock</title></head>
+<body>
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Step 1: Opening Stock Reconciliation</h2>
+    <a href="{{ url_for('opening_stock.download_vehicle_report') }}" class="btn btn-outline-dark shadow-sm">
+        <i class="bi bi-download me-2"></i>Download Vehicle Stock Report
+    </a>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+            <tr>
+                <th class="ps-4">Cylinder Type</th>
+                <th>Opening Filled</th>
+                <th>Opening Empty</th>
+                <th>Vehicle Empty</th>
+                <th class="pe-4">Total Stock</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rows %}
+            <tr>
+                <td class="ps-4"><strong>{{ r.cylinder_type }}</strong></td>
+                <td>{{ r.opening_filled }}</td>
+                <td>{{ r.opening_empty }}</td>
+                <td class="text-primary fw-bold">{{ r.defective_empty_vehicle }}</td>
+                <td class="pe-4"><strong>{{ r.total_stock }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-4 d-flex gap-2">
+    {% if not is_confirmed %}
+        <form action="{{ url_for('opening_stock.confirm_all_returned') }}" method="POST">
+            <button type="submit" class="btn btn-primary btn-lg px-5 fw-bold shadow">CONFIRM ALL RETURNED</button>
+        </form>
+        <a href="{{ url_for('opening_stock.reconcile_view') }}" class="btn btn-warning btn-lg px-5 text-dark shadow">RECONCILE VEHICLES</a>
+    {% else %}
+        <div class="alert alert-success w-100 text-center fw-bold shadow-sm">
+            <i class="bi bi-check-circle-fill me-2"></i> Opening Stock Confirmed for Today.
+        </div>
+    {% endif %}
+     <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
+</div>
+{% endblock %}
+</body>
+</html>

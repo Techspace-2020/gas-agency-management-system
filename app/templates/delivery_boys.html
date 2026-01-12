@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delivery Boys Master</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .sidebar { background: #212529; min-height: 100vh; color: white; padding: 20px; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px; border-radius: 5px; }
+        .sidebar a:hover, .sidebar a.active { background: #343a40; color: white; }
+    </style>
+</head>
+<body class="bg-light">
+
+{% extends "base.html" %}
+
+{% block title %}Delivery Boys - Veena Indane{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Delivery Boys Master</h2>
+    <a href="{{ url_for('delivery_boys.download_delivery_boys') }}" class="btn btn-outline-dark shadow-sm">
+        <i class="bi bi-file-earmark-spreadsheet me-2"></i>Generate CSV Report
+    </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
+            {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}{% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0 p-3">
+            <h5 class="fw-bold border-bottom pb-2">Add New Delivery Boy</h5>
+            <form method="POST">
+                <input type="hidden" name="action" value="create">
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="name" class="form-control" placeholder="Enter Name" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mobile Number</label>
+                    <input type="text" name="mobile" class="form-control" maxlength="10" placeholder="9900XXXXXX" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 fw-bold">Add to System</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0 p-3">
+            <h5 class="fw-bold border-bottom pb-2">Existing Delivery Boys</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Mobile</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in delivery_boys %}
+                        <tr>
+                            <td><span class="fw-bold text-dark">{{ d.name }}</span></td>
+                            <td>{{ d.mobile }}</td>
+                            <td class="text-center">
+                                <span class="badge {{ 'bg-success' if d.is_active else 'bg-secondary' }}">
+                                    {{ 'Active' if d.is_active else 'Inactive' }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+</body>
+</html>

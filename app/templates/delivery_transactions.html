@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .delivery-table { border-collapse: collapse; width: 100%; background: white; margin-bottom: 30px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .delivery-table th, .delivery-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    .type-header { background-color: #2c3e50; color: white; }
+    .cat-header { background-color: #f8f9fa; font-size: 0.85em; font-weight: bold; }
+    .tvout-col { background-color: #fff9db; }
+    input[type="number"] { width: 50px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-weight: bold; }
+</style>
+
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <h2 class="fw-bold">Step 3: Delivery Transactions</h2>
+    <span class="badge bg-dark fs-6">Date: {{ stock_date }}</span>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'info' if category == 'info' else 'danger' }} shadow-sm">
+          {{ message }}
+      </div>
+    {% endfor %}{% endif %}
+{% endwith %}
+
+{# HEADER STATUS #}
+{% if is_finalized %}
+<div class="alert alert-danger shadow-sm d-flex align-items-center mb-4">
+    <i class="bi bi-lock-fill me-2"></i><strong>LOCKED:</strong> Step 4 (Reconciliation) is complete. Data is read-only.
+</div>
+{% elif is_saved %}
+<div class="alert alert-info shadow-sm d-flex align-items-center mb-4">
+    <i class="bi bi-pencil-square me-2"></i><strong>EDIT MODE:</strong> You can update existing entries and click "Save All" again.
+</div>
+{% endif %}
+
+<form method="POST">
+    <div class="table-responsive">
+        <table class="delivery-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" class="bg-light">Delivery Boy</th>
+                    {% for ct in types %}
+                    <th colspan="4" class="type-header">{{ ct.code }}</th>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    {% for ct in types %}
+                    <th class="cat-header">Refill</th><th class="cat-header">NC</th><th class="cat-header">DBC</th><th class="cat-header bg-warning text-dark">TV-Out</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in boys %}
+                <tr>
+                    <td class="bg-light fw-bold text-start">{{ b.name }}</td>
+                    {% for ct in types %}
+                        {% set row = issues.get((b.delivery_boy_id, ct.cylinder_type_id)) %}
+                        <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_REFILL" value="{{ row.regular_qty if row else 0 }}" min="0" {% if is_finalized %}disabled{% endif %}></td>
+                        <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_NC" value="{{ row.nc_qty if row else 0 }}" min="0" {% if is_finalized %}disabled{% endif %}></td>
+                        <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_DBC" value="{{ row.dbc_qty if row else 0 }}" min="0" min="0"{% if is_finalized %}disabled{% endif %}></td>
+                        <td class="tvout-col"><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_TVOUT" value="{{ row.tv_out_qty if row else 0 }}" min="0" {% if is_finalized %}disabled{% endif %}></td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4 d-flex gap-3">
+        <button type="submit" class="btn btn-success btn-lg px-5 fw-bold shadow" {% if is_finalized %}disabled{% endif %}>
+            SAVE ALL TRANSACTIONS
+        </button>
+
+        {% if not is_finalized %}
+        <button type="submit" name="reset_db" class="btn btn-danger btn-lg px-4 fw-bold shadow" onclick="return confirm('Clear all entries for today?')">
+            RESET ALL
+        </button>
+        {% endif %}
+
+        <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
+    </div>
+</form>
+{% endblock %}

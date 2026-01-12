@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Expected Cash - Veena Indane{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold text-center">Step 5: Expected Cash Calculation – {{ stock_date }}</h2>
+</div>
+
+{% if success_message %}
+    <div class="alert alert-success shadow-sm mb-4">{{ success_message }}</div>
+{% endif %}
+
+{% if is_updated %}
+<div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-4 p-3">
+    <i class="bi bi-lock-fill fs-5 me-2"></i>
+    <div>
+        <strong>Cash Records Locked:</strong> System-derived totals are saved. These will be used to reconcile actual cash deposits.
+    </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm border-0 p-3 mb-4">
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle text-end">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th class="text-start">Delivery Boy</th>
+                    <th>Regular Refill</th>
+                    <th>NC (New Connection)</th>
+                    <th>DBC (Double Bottle)</th>
+                    <th class="text-warning">TV-Out Refund</th>
+                    <th class="bg-success text-white">Final Expected</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in results %}
+                <tr>
+                    <td class="text-start fw-bold">{{ row.delivery_boy }}</td>
+                    <td>₹{{ "{:,.2f}".format(row.regular_amt) }}</td>
+                    <td>₹{{ "{:,.2f}".format(row.nc_amt) }}</td>
+                    <td>₹{{ "{:,.2f}".format(row.dbc_amt) }}</td>
+                    <td class="text-danger fw-bold">- ₹{{ "{:,.2f}".format(row.tv_refund) }}</td>
+                    <td class="bg-light fw-bold text-success">₹{{ "{:,.2f}".format(row.final_expected) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <form method="POST" class="mt-4">
+        {% if is_updated %}
+            <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold" disabled>
+                <i class="bi bi-shield-check me-2"></i>CASH TOTALS SAVED TO DATABASE
+            </button>
+        {% else %}
+            <button type="submit" class="btn btn-success btn-lg w-100 fw-bold shadow">
+                <i class="bi bi-save me-2"></i>CONFIRM & UPDATE CASH TOTALS
+            </button>
+        {% endif %}
+    </form>
+</div>
+
+<div class="d-flex justify-content-between">
+    <a href="{{ url_for('closing_stock.closing_view') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Reconciliation
+    </a>
+    <a href="/dashboard" class="btn btn-dark">
+        Return to Dashboard
+    </a>
+</div>
+{% endblock %}

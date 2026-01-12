@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <h2 class="fw-bold">Step 2: IOCL Stock Movements</h2>
+    <span class="badge bg-dark p-2">Date: {{ stock_date }}</span>
+</div>
+
+{# Alerts #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ 'info' if category == 'info' else 'success' if category == 'success' else 'danger' }} shadow-sm">
+            {{ message }}
+        </div>
+    {% endfor %}{% endif %}
+{% endwith %}
+
+{# Sequence Warning #}
+{% if not step1_done %}
+<div class="alert alert-warning shadow-sm border-start border-4 border-warning">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Prerequisite Missing:</strong> Please complete Step 1 (Opening Stock) first.
+</div>
+{% endif %}
+
+{# Status Header with restored Reset Button #}
+{% if has_data or is_finalized %}
+<div class="alert {% if is_finalized %}alert-secondary{% else %}alert-primary{% endif %} d-flex justify-content-between align-items-center p-3 mb-4 shadow-sm">
+    <div>
+        <i class="bi {% if is_finalized %}bi-lock-fill{% else %}bi-info-circle-fill{% endif %} me-2"></i>
+        <strong>Status:</strong>
+        {% if no_movement %}
+            <span class="badge bg-warning text-dark">MARKED: NO MOVEMENT TODAY</span>
+        {% else %}
+            {{ total_received }} Received / {{ total_returned }} Returned
+        {% endif %}
+        {% if is_finalized %}<span class="badge bg-danger ms-2">FINALIZED</span>{% endif %}
+    </div>
+
+    {% if is_editable and has_data %}
+    <form action="{{ url_for('iocl_movements.delete_movements') }}" method="POST">
+        <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm"
+                onclick="return confirm('Reset all receipt/return values and the no-movement flag?');">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> RESET & RE-ENTER
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="card shadow-sm border-0 p-4 mb-4">
+    <form method="POST" id="ioclForm">
+
+        {# NO MOVEMENT TOGGLE #}
+        <div class="form-check form-switch mb-4 p-3 bg-light border rounded">
+            <input class="form-check-input ms-0 me-3" type="checkbox" name="no_movement" id="noMovCheck"
+                   style="transform: scale(1.4);" {% if no_movement %}checked{% endif %} {% if not is_editable %}disabled{% endif %}>
+            <label class="form-check-label fw-bold text-primary" for="noMovCheck">
+                Mark as "No Stock Activity Today"
+            </label>
+            <div class="small text-muted ms-5">Enable this if no loads were received and no empty cylinders were returned to IOCL.</div>
+        </div>
+
+        <div id="tableSection" {% if no_movement %}style="opacity: 0.4; pointer-events: none;"{% endif %}>
+            <table class="table table-bordered align-middle">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th class="text-start">Cylinder Type</th>
+                        <th>Filled Received</th>
+                        <th>Empty Returned</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr>
+                        <td class="fw-bold bg-light">{{ r.cylinder_type }}</td>
+                        <td>
+                            <input type="number" name="receipt_{{ r.cylinder_type_id }}"
+                                   class="form-control text-center iocl-input" value="{{ r.item_receipt }}"
+                                   min="0" {% if not is_editable %}readonly{% endif %}>
+                        </td>
+                        <td>
+                            <input type="number" name="return_{{ r.cylinder_type_id }}"
+                                   class="form-control text-center iocl-input" value="{{ r.item_return }}"
+                                   min="0" {% if not is_editable %}readonly{% endif %}>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+            {% if is_editable %}
+                <button type="submit" class="btn btn-primary btn-lg px-5 fw-bold shadow">SAVE STEP 2</button>
+            {% else %}
+                <button type="button" class="btn btn-secondary btn-lg px-5 fw-bold" disabled>
+                    <i class="bi bi-lock-fill me-2"></i>RECORDS LOCKED
+                </button>
+            {% endif %}
+            <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('noMovCheck').addEventListener('change', function() {
+    const tableSection = document.getElementById('tableSection');
+    const inputs = document.querySelectorAll('.iocl-input');
+    if(this.checked) {
+        tableSection.style.opacity = '0.4';
+        tableSection.style.pointerEvents = 'none';
+        inputs.forEach(input => input.value = 0);
+    } else {
+        tableSection.style.opacity = '1';
+        tableSection.style.pointerEvents = 'auto';
+    }
+});
+</script>
+{% endblock %}
