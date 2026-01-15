@@ -19,6 +19,13 @@ def get_stock_days(db):
 def summary_view():
     db = SessionLocal()
     try:
+        open_day = db.execute(text("""
+            SELECT stock_day_id, stock_date 
+            FROM stock_days 
+            WHERE status = 'OPEN' 
+            ORDER BY stock_date DESC LIMIT 1
+        """)).fetchone()
+
         prev_day, open_day = get_stock_days(db)
         if not open_day:
             return "No Active Stock Day Found", 404
@@ -40,7 +47,7 @@ def summary_view():
             ORDER BY ct.code
         """), {"open_id": open_day.stock_day_id, "prev_id": prev_day.stock_day_id if prev_day else 0}).fetchall()
 
-        return render_template("opening_stock_summary.html", rows=rows, is_confirmed=is_confirmed)
+        return render_template("opening_stock_summary.html", rows=rows, is_confirmed=is_confirmed, stock_date=open_day.stock_date)
     finally:
         db.close()
 

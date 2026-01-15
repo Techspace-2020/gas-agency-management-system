@@ -28,7 +28,7 @@ def login():
                 if result.is_approved == 1:
                     user_obj = User(user_id=result.user_id, username=result.username)
                     login_user(user_obj)
-                    flash(f"Login successful! {result.username}", "success")
+                    flash(f"{result.username} Logged in successfully!", "success")
                     return redirect(url_for('stock_day.dashboard'))
                 else:
                     flash("Your account is pending administrator approval.", "warning")

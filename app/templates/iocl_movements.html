@@ -3,10 +3,10 @@
 {% block content %}
 <div class="mb-4 d-flex justify-content-between align-items-center">
     <h2 class="fw-bold">Step 2: IOCL Stock Movements</h2>
-    <span class="badge bg-dark p-2">Date: {{ stock_date }}</span>
+    <span class="badge bg-dark fs-6">Date: {{ stock_date }}</span>
 </div>
 
-{# Alerts #}
+{# Flash Messages #}
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}{% for category, message in messages %}
         <div class="alert alert-{{ 'info' if category == 'info' else 'success' if category == 'success' else 'danger' }} shadow-sm">
@@ -37,20 +37,14 @@
         {% if is_finalized %}<span class="badge bg-danger ms-2">FINALIZED</span>{% endif %}
     </div>
 
-    {# RESET BUTTON LOGIC: Disable if day is finalized #}
-    {% if is_editable and has_data %}
-        {% if not is_finalized %}
-            <form action="{{ url_for('iocl_movements.delete_movements') }}" method="POST">
-                <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm"
-                        onclick="return confirm('Reset all receipt/return values and the no-movement flag?');">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i> RESET & RE-ENTER
-                </button>
-            </form>
-        {% else %}
-            <button class="btn btn-secondary btn-sm fw-bold shadow-sm" disabled>
-                <i class="bi bi-lock-fill me-1"></i> RESET LOCKED
+    {# RESET BUTTON: Only shown if not finalized #}
+    {% if is_editable and has_data and not is_finalized %}
+        <form action="{{ url_for('iocl_movements.delete_movements') }}" method="POST">
+            <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm"
+                    onclick="return confirm('Reset all values? This will enable the Confirm button again.');">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> RESET & RE-ENTER
             </button>
-        {% endif %}
+        </form>
     {% endif %}
 </div>
 {% endif %}
@@ -60,24 +54,23 @@
 
         {# NO MOVEMENT TOGGLE #}
         <div class="form-check form-switch mb-4 p-3 bg-light border rounded">
-            {# Disable toggle if finalized #}
             <input class="form-check-input ms-0 me-3" type="checkbox" name="no_movement" id="noMovCheck"
                    style="transform: scale(1.4);" {% if no_movement %}checked{% endif %}
-                   {% if not is_editable or is_finalized %}disabled{% endif %}>
+                   {% if not is_editable or is_finalized or has_data %}disabled{% endif %}>
             <label class="form-check-label fw-bold text-primary" for="noMovCheck">
                 Mark as "No Stock Activity Today"
             </label>
             <div class="small text-muted ms-5">Enable this if no loads were received and no empty cylinders were returned to IOCL.</div>
         </div>
 
-        {# TABLE SECTION: Visual lock if no_movement OR is_finalized #}
-        <div id="tableSection" {% if no_movement or is_finalized %}style="opacity: 0.4; pointer-events: none;"{% endif %}>
+        {# TABLE SECTION #}
+        <div id="tableSection" {% if no_movement or is_finalized or has_data %}style="opacity: 0.5; pointer-events: none;"{% endif %}>
             <table class="table table-bordered align-middle">
                 <thead class="table-dark text-center">
                     <tr>
                         <th class="text-start">Cylinder Type</th>
-                        <th>Filled Received</th>
-                        <th>Empty Returned</th>
+                        <th>Item Receipt (Filled Received)</th>
+                        <th>Item Return (Empty Returned)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -87,12 +80,12 @@
                         <td>
                             <input type="number" name="receipt_{{ r.cylinder_type_id }}"
                                    class="form-control text-center iocl-input" value="{{ r.item_receipt }}"
-                                   min="0" {% if not is_editable or is_finalized %}readonly{% endif %}>
+                                   min="0" {% if not is_editable or is_finalized or has_data %}readonly{% endif %}>
                         </td>
                         <td>
                             <input type="number" name="return_{{ r.cylinder_type_id }}"
                                    class="form-control text-center iocl-input" value="{{ r.item_return }}"
-                                   min="0" {% if not is_editable or is_finalized %}readonly{% endif %}>
+                                   min="0" {% if not is_editable or is_finalized or has_data %}readonly{% endif %}>
                         </td>
                     </tr>
                     {% endfor %}
@@ -100,30 +93,86 @@
             </table>
         </div>
 
-        <div class="mt-4 d-flex gap-2">
+        {# ACTION AREA: Button or Success Alert #}
+        <div class="mt-4">
             {% if is_editable and not is_finalized %}
-                <button type="submit" class="btn btn-primary btn-lg px-5 fw-bold shadow">SAVE STEP 2</button>
+                {% if has_data %}
+                    <!-- ALERT replaces the button when data exists -->
+                    <div class="alert alert-success d-inline-block fw-bold shadow-sm border-start border-4 border-success px-4">
+                        <i class="bi bi-check-circle-fill me-2"></i> IOCL Movements Confirmed for Today.
+                    </div>
+                {% else %}
+                    <!-- BUTTON shown only when data does not exist -->
+                    <button type="button" id="confirmAllBtn" class="btn btn-primary btn-lg px-5 fw-bold shadow">
+                        CONFIRM IOCL STOCK
+                    </button>
+                {% endif %}
             {% else %}
                 <button type="button" class="btn btn-secondary btn-lg px-5 fw-bold" disabled>
                     <i class="bi bi-lock-fill me-2"></i>RECORDS LOCKED
                 </button>
             {% endif %}
-            <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
+            
+            <div class="mt-3">
+                <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
+            </div>
         </div>
     </form>
 </div>
 
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmAllModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Please confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">Are you sure you want to confirm IOCL Stock?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <button type="button" id="confirmAllYes" class="btn btn-primary">Yes, Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-document.getElementById('noMovCheck').addEventListener('change', function() {
-    const tableSection = document.getElementById('tableSection');
-    const inputs = document.querySelectorAll('.iocl-input');
-    if(this.checked) {
-        tableSection.style.opacity = '0.4';
-        tableSection.style.pointerEvents = 'none';
-        inputs.forEach(input => input.value = 0);
-    } else {
-        tableSection.style.opacity = '1';
-        tableSection.style.pointerEvents = 'auto';
+document.addEventListener('DOMContentLoaded', function() {
+    var confirmBtn = document.getElementById('confirmAllBtn');
+    var confirmModal = new bootstrap.Modal(document.getElementById('confirmAllModal'));
+    var confirmYes = document.getElementById('confirmAllYes');
+    var form = document.getElementById('ioclForm'); 
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function() {
+            confirmModal.show();
+        });
+    }
+
+    if (confirmYes) {
+        confirmYes.addEventListener('click', function() {
+            confirmYes.disabled = true;
+            confirmYes.innerText = 'Confirming...';
+            form.submit();
+        });
+    }
+
+    // Toggle logic for the switch
+    const noMovCheck = document.getElementById('noMovCheck');
+    if (noMovCheck) {
+        noMovCheck.addEventListener('change', function() {
+            const tableSection = document.getElementById('tableSection');
+            const inputs = document.querySelectorAll('.iocl-input');
+            if(this.checked) {
+                tableSection.style.opacity = '0.5';
+                tableSection.style.pointerEvents = 'none';
+                inputs.forEach(input => input.value = 0);
+            } else {
+                tableSection.style.opacity = '1';
+                tableSection.style.pointerEvents = 'auto';
+            }
+        });
     }
 });
 </script>

@@ -8,7 +8,6 @@
     .tvout-col { background-color: #fff9db; }
     input[type="number"] { width: 50px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-weight: bold; }
     .flash-message { transition: opacity 0.6s ease; }
-    /* Visual lock for finalized state */
     .locked-overlay { opacity: 0.5; pointer-events: none; filter: grayscale(50%); }
 </style>
 
@@ -26,34 +25,19 @@
 {% endwith %}
 
 <form method="POST" id="deliveryForm">
-    {# NO MOVEMENT TOGGLE - Disabled if is_finalized #}
+    {# NO MOVEMENT TOGGLE #}
     <div class="form-check form-switch mb-4 p-3 bg-light border rounded shadow-sm">
         <input class="form-check-input ms-0 me-3" type="checkbox" name="delivery_no_movement" id="delNoMovCheck"
                style="transform: scale(1.4);" {% if no_movement %}checked{% endif %}
-               {% if is_finalized %}disabled{% endif %}>
+               {% if is_finalized or is_saved %}disabled{% endif %}>
         <label class="form-check-label fw-bold text-primary" for="delNoMovCheck">
             <i class="bi bi-person-x-fill me-2"></i> No Deliveries or Transactions Today
         </label>
-        <div class="small text-muted ms-5">Toggle this if no cylinders were issued to delivery boys today.</div>
+        <div class="small text-muted ms-5">Enable this if no deliveries or transactions occurred today.</div>
     </div>
 
-    {# STATUS MESSAGES #}
-    {% if is_finalized %}
-    <div class="alert alert-danger shadow-sm d-flex align-items-center mb-4">
-        <i class="bi bi-lock-fill me-2"></i><strong>LOCKED:</strong> Reconciliation (Step 4) is complete. These records are now read-only.
-    </div>
-    {% elif no_movement %}
-    <div class="alert alert-warning shadow-sm d-flex align-items-center mb-4">
-        <i class="bi bi-info-circle me-2"></i><strong>STATUS:</strong> Marked as "No Transactions Today".
-    </div>
-    {% elif is_saved %}
-    <div class="alert alert-info shadow-sm d-flex align-items-center mb-4">
-        <i class="bi bi-pencil-square me-2"></i><strong>EDIT MODE:</strong> You can update entries and click "Save All" again.
-    </div>
-    {% endif %}
-
-    {# TABLE SECTION - Locked visually if no_movement OR is_finalized #}
-    <div id="tableSection" class="{% if no_movement or is_finalized %}locked-overlay{% endif %}">
+    {# TABLE SECTION #}
+    <div id="tableSection" class="{% if no_movement or is_finalized or is_saved %}locked-overlay{% endif %}">
         <div class="table-responsive">
             <table class="delivery-table">
                 <thead>
@@ -78,10 +62,10 @@
                         <td class="bg-light fw-bold text-start">{{ b.name }}</td>
                         {% for ct in types %}
                             {% set row = issues.get((b.delivery_boy_id, ct.cylinder_type_id)) %}
-                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_REFILL" value="{{ row.regular_qty if row else 0 }}" min="0" class="del-input" {% if is_finalized %}disabled{% endif %}></td>
-                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_NC" value="{{ row.nc_qty if row else 0 }}" min="0" class="del-input" {% if is_finalized %}disabled{% endif %}></td>
-                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_DBC" value="{{ row.dbc_qty if row else 0 }}" min="0" class="del-input" {% if is_finalized %}disabled{% endif %}></td>
-                            <td class="tvout-col"><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_TVOUT" value="{{ row.tv_out_qty if row else 0 }}" min="0" class="del-input" {% if is_finalized %}disabled{% endif %}></td>
+                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_REFILL" value="{{ row.regular_qty if row else 0 }}" min="0" class="del-input" {% if is_finalized or is_saved %}readonly{% endif %}></td>
+                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_NC" value="{{ row.nc_qty if row else 0 }}" min="0" class="del-input" {% if is_finalized or is_saved %}readonly{% endif %}></td>
+                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_DBC" value="{{ row.dbc_qty if row else 0 }}" min="0" class="del-input" {% if is_finalized or is_saved %}readonly{% endif %}></td>
+                            <td class="tvout-col"><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_TVOUT" value="{{ row.tv_out_qty if row else 0 }}" min="0" class="del-input" {% if is_finalized or is_saved %}readonly{% endif %}></td>
                         {% endfor %}
                     </tr>
                     {% endfor %}
@@ -90,51 +74,96 @@
         </div>
     </div>
 
-    <div class="mt-4 d-flex gap-3">
-        {# SAVE BUTTON - Hidden or disabled if is_finalized #}
-        {% if not is_finalized %}
-        <button type="submit" class="btn btn-success btn-lg px-5 fw-bold shadow">
-            SAVE ALL TRANSACTIONS
-        </button>
+    <div class="mt-4">
+        {% if is_finalized %}
+            <div class="alert alert-secondary d-inline-block fw-bold shadow-sm mb-3">
+                <i class="bi bi-lock-fill me-2"></i> Records Finalized (Read Only)
+            </div>
+        {% elif is_saved or no_movement %}
+            <div class="alert alert-success w-50 text-start fw-bold shadow-sm mb-3">
+                <i class="bi bi-check-circle-fill me-2"></i> Delivery Transactions Confirmed for Today.
+            </div>
+            <button type="submit" name="reset_db" class="btn btn-danger btn-lg px-4 fw-bold shadow mb-3" 
+                    onclick="return confirm('Resetting will clear all entries. Continue?')">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> RESET & RE-ENTER
+            </button>
         {% else %}
-        <button type="button" class="btn btn-secondary btn-lg px-5 fw-bold shadow" disabled>
-            <i class="bi bi-lock-fill me-2"></i> DATA LOCKED
-        </button>
+            {# SAVE BUTTON: Triggers Modal instead of direct submit #}
+            <button type="button" id="confirmAllBtn" class="btn btn-success btn-lg px-5 fw-bold shadow mb-3">
+                CONFIRM TRANSACTIONS
+            </button>
         {% endif %}
 
-        {# RESET BUTTON - Logic ensures it only appears/works if not finalized #}
-        {% if not is_finalized %}
-        <button type="submit" name="reset_db" class="btn btn-danger btn-lg px-4 fw-bold shadow" onclick="return confirm('Resetting will clear all entries and the No-Movement flag. Continue?')">
-            RESET ALL
-        </button>
-        {% endif %}
-
-        <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
+        <div class="d-block">
+            <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
+        </div>
     </div>
 </form>
 
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmAllModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Please confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">Are you sure you want to save and confirm all delivery transactions?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <button type="button" id="confirmAllYes" class="btn btn-success">Yes, Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-    // Toggle Table visibility (UI only)
-    document.getElementById('delNoMovCheck').addEventListener('change', function() {
-        const table = document.getElementById('tableSection');
-        const inputs = document.querySelectorAll('.del-input');
-        if(this.checked) {
-            table.classList.add('locked-overlay');
-            inputs.forEach(i => i.value = 0);
-        } else {
-            table.classList.remove('locked-overlay');
-        }
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    var confirmBtn = document.getElementById('confirmAllBtn');
+    var confirmModalEl = document.getElementById('confirmAllModal');
+    var confirmModal = new bootstrap.Modal(confirmModalEl);
+    var confirmYes = document.getElementById('confirmAllYes');
+    var form = document.getElementById('deliveryForm'); 
+
+    // Handle Modal Trigger
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function() {
+            confirmModal.show();
+        });
+    }
+
+    // Handle Actual Submission from Modal
+    if (confirmYes) {
+        confirmYes.addEventListener('click', function() {
+            confirmYes.disabled = true;
+            confirmYes.innerText = 'Saving...';
+            form.submit();
+        });
+    }
+
+    // Switch Toggle logic
+    const delNoMovCheck = document.getElementById('delNoMovCheck');
+    if (delNoMovCheck) {
+        delNoMovCheck.addEventListener('change', function() {
+            const table = document.getElementById('tableSection');
+            const inputs = document.querySelectorAll('.del-input');
+            if(this.checked) {
+                table.classList.add('locked-overlay');
+                inputs.forEach(i => i.value = 0);
+            } else {
+                table.classList.remove('locked-overlay');
+            }
+        });
+    }
 
     // Auto-hide flash messages
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-            const messages = document.querySelectorAll('.flash-message');
-            messages.forEach(function(msg) {
-                msg.style.opacity = "0";
-                setTimeout(() => msg.remove(), 600);
-            });
-        }, 3000);
-    });
+    setTimeout(function() {
+        const messages = document.querySelectorAll('.flash-message');
+        messages.forEach(function(msg) {
+            msg.style.opacity = "0";
+            setTimeout(() => msg.remove(), 600);
+        });
+    }, 3000);
+});
 </script>
 {% endblock %}

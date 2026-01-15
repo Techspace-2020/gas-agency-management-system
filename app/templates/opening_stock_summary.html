@@ -4,12 +4,25 @@
 <body>
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold">Step 1: Opening Stock Reconciliation</h2>
+    <span class="badge bg-dark p-2">Date: {{ stock_date }}</span>
     <a href="{{ url_for('opening_stock.download_vehicle_report') }}" class="btn btn-outline-dark shadow-sm">
         <i class="bi bi-download me-2"></i>Download Vehicle Stock Report
     </a>
+</div> -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">Step 1: Opening Stock Reconciliation</h2>
+    
+    <!-- Grouping Date and Button to keep them on the right -->
+    <div class="d-flex align-items-center gap-3">
+        <span class="badge bg-dark p-2">Date: {{ stock_date }}</span>
+        <a href="{{ url_for('opening_stock.download_vehicle_report') }}" class="btn btn-outline-dark shadow-sm">
+            <i class="bi bi-download me-2"></i>Download Vehicle Stock Report
+        </a>
+    </div>
 </div>
+
 
 <div class="card shadow-sm border-0 mb-4">
     <table class="table table-hover align-middle mb-0">
@@ -36,19 +49,70 @@
     </table>
 </div>
 
-<div class="mt-4 d-flex gap-2">
+<div class="mt-4">
     {% if not is_confirmed %}
-        <form action="{{ url_for('opening_stock.confirm_all_returned') }}" method="POST">
-            <button type="submit" class="btn btn-primary btn-lg px-5 fw-bold shadow">CONFIRM ALL RETURNED</button>
-        </form>
-        <a href="{{ url_for('opening_stock.reconcile_view') }}" class="btn btn-warning btn-lg px-5 text-dark shadow">RECONCILE VEHICLES</a>
+        <div class="d-flex gap-2">
+            <form id="confirmAllForm" action="{{ url_for('opening_stock.confirm_all_returned') }}" method="POST">
+                <button type="button" id="confirmAllBtn" class="btn btn-primary btn-lg px-5 fw-bold shadow">CONFIRM ALL RETURNED</button>
+            </form>
+            <a href="{{ url_for('opening_stock.reconcile_view') }}" class="btn btn-warning btn-lg px-5 text-dark shadow">RECONCILE VEHICLES</a>
+            <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
+        </div>
     {% else %}
-        <div class="alert alert-success w-100 text-center fw-bold shadow-sm">
+        <!-- Alert stays on its own line -->
+        <div class="alert alert-success w-50 text-start fw-bold shadow-sm mb-3">
             <i class="bi bi-check-circle-fill me-2"></i> Opening Stock Confirmed for Today.
         </div>
+        <!-- Back button stays normal size below or beside -->
+        <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
     {% endif %}
-     <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
 </div>
+
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmAllModal" tabindex="-1" aria-labelledby="confirmAllModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmAllModalLabel">Please confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to confirm all returned?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <button type="button" id="confirmAllYes" class="btn btn-primary">Yes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var confirmBtn = document.getElementById('confirmAllBtn');
+    var confirmModal = new bootstrap.Modal(document.getElementById('confirmAllModal'));
+    var confirmYes = document.getElementById('confirmAllYes');
+    var form = document.getElementById('confirmAllForm');
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function(e) {
+            confirmModal.show();
+        });
+    }
+
+    if (confirmYes) {
+        confirmYes.addEventListener('click', function(e) {
+            // Optionally show a quick client-side message before submitting
+            // Submit the form to perform server-side confirmation
+            confirmYes.disabled = true;
+            confirmYes.innerText = 'Confirming...';
+            form.submit();
+        });
+    }
+});
+</script>
+
 {% endblock %}
 </body>
 </html>
