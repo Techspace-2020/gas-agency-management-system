@@ -1,8 +1,8 @@
-import csv
-import io
-from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
+import pandas as pd
+from flask import Blueprint, render_template, request, redirect, url_for, flash, Response,send_file
 from sqlalchemy import text
 from app.db.session import SessionLocal
+import io
 
 opening_stock_bp = Blueprint("opening_stock", __name__)
 
@@ -120,8 +120,10 @@ def reconcile_view():
 def download_vehicle_report():
     db = SessionLocal()
     try:
+        # Check for open day
         curr = db.execute(text("SELECT stock_day_id, stock_date FROM stock_days WHERE status = 'OPEN' LIMIT 1")).fetchone()
-        if not curr: return "No open day", 404
+        if not curr: 
+            return "No open day", 404
 
         # Query for report data
         results = db.execute(text("""
@@ -133,16 +135,26 @@ def download_vehicle_report():
             ORDER BY db.name, ct.code
         """), {"s_id": curr.stock_day_id}).fetchall()
 
-        output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow(["Delivery Boy", "Cylinder Type", "Empty Qty in Vehicle"])
-        for row in results:
-            writer.writerow([row.delivery_boy, row.cylinder_type, row.empty_qty])
+        # Convert results to a list of dictionaries for Pandas
+        data = [
+            {"Delivery Boy": row.delivery_boy, "Cylinder Type": row.cylinder_type, "Empty Qty in Vehicle": row.empty_qty} 
+            for row in results
+        ]
+        df = pd.DataFrame(data)
 
-        return Response(output.getvalue(), mimetype="text/csv",
-                        headers={"Content-Disposition": f"attachment; filename=vehicle_stock_{curr.stock_date}.csv"})
+        # Create an in-memory binary stream
+        output = io.BytesIO()
+
+        # Write to Excel using pandas (engine 'xlsxwriter' is the 2026 standard for .xlsx)
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Vehicle Report')
+        
+        # Move pointer to the start of the stream
+        output.seek(0)
+        return send_file(output, download_name=f"Vehicle_Stock_{curr.stock_date}.xlsx", as_attachment=True)
     finally:
         db.close()
+
 
 @opening_stock_bp.route("/opening-stock/confirm-all", methods=["POST"])
 def confirm_all_returned():

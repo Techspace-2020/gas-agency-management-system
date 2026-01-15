@@ -35,7 +35,7 @@
     </div>
 
     {% elif day %}
-    <h4 class="fw-bold mb-3 text-secondary border-bottom pb-2">Stock Handling</h4>
+    <h4 class="fw-bold mb-3 text-primary border-bottom pb-2">Stock Handling</h4>
     <div class="row g-3 mb-5">
         {% set stock_steps = [
             {'key': 'opening_stock', 'title': '1. Opening Stock', 'url': 'opening_stock.summary_view', 'req': None},
@@ -60,7 +60,7 @@
         {% endfor %}
     </div>
 
-    <h4 class="fw-bold mb-3 text-secondary border-bottom pb-2">Cash Handling</h4>
+    <h4 class="fw-bold mb-3 text-success border-bottom pb-2">Cash Handling</h4>
     <div class="row g-3 mb-5">
         {% set cash_steps = [
             {'key': 'expected_cash', 'title': '1. Expected Cash', 'url': 'cash_settlement.cash_view', 'req': 'finalized_stock'},
@@ -100,7 +100,7 @@
                             <input type="date" name="selected_date" class="form-control" required>
                         </div>
                         <div class="col-sm-5">
-                            <button type="submit" class="btn btn-outline-primary w-100 fw-bold">Generate Stock</button>
+                            <button type="submit" class="btn btn-outline-primary w-50 fw-bold">Generate Stock</button>
                         </div>
                     </form>
                 </div>
@@ -114,7 +114,7 @@
                             <input type="date" name="selected_date" class="form-control" required>
                         </div>
                         <div class="col-sm-5">
-                            <button type="submit" class="btn btn-outline-success w-100 fw-bold">Generate Cash</button>
+                            <button type="submit" class="btn btn-outline-success w-50 fw-bold">Generate Cash</button>
                         </div>
                     </form>
                 </div>
