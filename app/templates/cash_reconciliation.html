@@ -17,7 +17,7 @@
 {% endwith %}
 
 <div class="card shadow-sm border-0 p-4 mb-4">
-    <form method="POST">
+    <form method="POST" id="reconciliationForm">
         <div class="table-responsive">
             <table class="table table-bordered align-middle text-end">
                 <thead class="table-dark text-center">
@@ -58,7 +58,7 @@
         </div>
 
         <div class="mt-4">
-            <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold shadow"
+            <button type="button" class="btn btn-primary btn-lg px-5 fw-bold shadow" onclick="showConfirmationModal()"
                     {% if has_updated %}disabled{% endif %}>
                 {% if has_updated %}
                     <i class="bi bi-check-circle-fill me-2"></i>BALANCES UPDATED
@@ -76,15 +76,85 @@
     </a>
 
     {% if has_updated %}
-        <a href="{{ url_for('cash_reconciliation.day_close') }}"
-           class="btn btn-danger btn-lg px-5 fw-bold shadow"
-           onclick="return confirm('CLOSE DAY? Remaining balances will carry forward to the next day.')">
+        <!-- Trigger Button for Modal -->
+        <button type="button" 
+                class="btn btn-danger btn-lg px-5 fw-bold shadow" 
+                data-bs-toggle="modal" 
+                data-bs-target="#confirmCloseModal">
             FINALIZE & CLOSE DAY <i class="bi bi-power ms-2"></i>
-        </a>
+        </button>
     {% else %}
         <button class="btn btn-secondary btn-lg px-5 fw-bold shadow" disabled>
             FINALIZE & CLOSE DAY <i class="bi bi-lock-fill ms-2"></i>
         </button>
     {% endif %}
 </div>
+
+<!-- Bootstrap Confirmation Modal -->
+<div class="modal fade" id="confirmCloseModal" tabindex="-1" aria-labelledby="confirmCloseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="confirmCloseModalLabel">Confirm Day Close</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="fs-5 mb-0 text-center">
+                    <strong>CLOSE DAY?</strong><br>
+                    Remaining balances will carry forward to the next day.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                <a href="{{ url_for('cash_reconciliation.day_close') }}" class="btn btn-danger px-4 fw-bold">
+                    YES, FINALIZE & CLOSE
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Confirmation Modal Structure (Requires Bootstrap 5 JS/CSS for full functionality) -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirm Reconciliation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to save the Cash Reconciliation?
+                Please ensure all amounts are correct before confirming.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <!-- This button actually submits the form -->
+                <button type="button" class="btn btn-success" onclick="submitForm()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to show the Bootstrap modal
+    function showConfirmationModal() {
+        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'), {
+            keyboard: false
+        });
+        confirmationModal.show();
+    }
+
+    // Function to submit the form once confirmed
+    function submitForm() {
+        // Close the modal if it's open
+        const modalElement = document.getElementById('confirmationModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+            modalInstance.hide();
+        }     
+        // Submit the form
+        document.getElementById('reconciliationForm').submit();
+    }
+</script>
 {% endblock %}

@@ -5,7 +5,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold">Reconcile Empty Cylinders</h2>
         <p class="text-muted mb-0">Stock Date: {{ stock_date }}</p>
@@ -13,9 +13,20 @@
     <a href="{{ url_for('opening_stock.download_vehicle_report') }}" class="btn btn-outline-dark shadow-sm">
         <i class="bi bi-download me-2"></i>Download Vehicle Stock Report
     </a>
+</div> -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">Step 1: Opening Stock Reconciliation</h2>
+    
+    <!-- Grouping Date and Button to keep them on the right -->
+    <div class="d-flex align-items-center gap-3">
+        <span class="badge bg-dark p-2">Date: {{ stock_date }}</span>
+        <a href="{{ url_for('opening_stock.download_vehicle_report') }}" class="btn btn-outline-dark shadow-sm">
+            <i class="bi bi-download me-2"></i>Download Vehicle Stock Report
+        </a>
+    </div>
 </div>
 
-<form method="POST">
+<form method="POST" id="reconcileForm">
     <div class="card shadow-sm border-0">
         <div class="table-responsive">
             <table class="table table-bordered align-middle mb-0">
@@ -46,10 +57,55 @@
         </div>
     </div>
     <div class="mt-4 d-flex gap-2">
-        <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">SAVE RECONCILIATION</button>
+        <button type="button" id="confirmAllBtn" class="btn btn-primary px-5 fw-bold shadow-sm">SAVE RECONCILIATION</button>
         <a href="{{ url_for('opening_stock.summary_view') }}" class="btn btn-outline-secondary px-4">CANCEL</a>
     </div>
 </form>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmAllModal" tabindex="-1" aria-labelledby="confirmAllModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmAllModalLabel">Please confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to confirm opening stock reconciliation?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <button type="button" id="confirmAllYes" class="btn btn-primary">Yes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var confirmBtn = document.getElementById('confirmAllBtn');
+    var confirmModal = new bootstrap.Modal(document.getElementById('confirmAllModal'));
+    var confirmYes = document.getElementById('confirmAllYes');
+    var form = document.getElementById('reconcileForm');
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function(e) {
+            confirmModal.show();
+        });
+    }
+
+    if (confirmYes) {
+        confirmYes.addEventListener('click', function(e) {
+            // Optionally show a quick client-side message before submitting
+            // Submit the form to perform server-side confirmation
+            confirmYes.disabled = true;
+            confirmYes.innerText = 'Confirming...';
+            form.submit();
+        });
+    }
+});
+</script>
+
 {% endblock %}
 </body>
 </html>

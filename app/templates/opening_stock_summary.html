@@ -56,16 +56,17 @@
                 <button type="button" id="confirmAllBtn" class="btn btn-primary btn-lg px-5 fw-bold shadow">CONFIRM ALL RETURNED</button>
             </form>
             <a href="{{ url_for('opening_stock.reconcile_view') }}" class="btn btn-warning btn-lg px-5 text-dark shadow">RECONCILE VEHICLES</a>
-            <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
         </div>
     {% else %}
         <!-- Alert stays on its own line -->
         <div class="alert alert-success w-50 text-start fw-bold shadow-sm mb-3">
             <i class="bi bi-check-circle-fill me-2"></i> Opening Stock Confirmed for Today.
         </div>
-        <!-- Back button stays normal size below or beside -->
-        <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
     {% endif %}
+    <!-- Back button stays normal size below or beside -->
+         <div class="mt-3">
+            <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
+        </div>
 </div>
 
 

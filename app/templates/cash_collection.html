@@ -3,7 +3,7 @@
 {% block content %}
 <div class="mb-4 d-flex justify-content-between align-items-center">
     <h2 class="fw-bold text-center">Step 2: Cash Collection</h2>
-    <span class="badge bg-dark fs-6">Date: {{ stock_date }}</span>
+    <span class="badge bg-dark fs-6">Stock Date: {{ stock_date }}</span>
 </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -13,7 +13,7 @@
 {% endwith %}
 
 <div class="card shadow-sm border-0 p-4 mb-4">
-    <form method="POST">
+    <form method="POST" id="collectionForm">
         <div class="table-responsive">
             <table class="table table-bordered align-middle text-center">
                 <thead class="table-dark">
@@ -21,7 +21,7 @@
                         <th class="text-start">Delivery Boy</th>
                         <th>Cash (₹)</th>
                         <th>UPI (₹)</th>
-                        <th>Total (₹)</th>
+                        <th>Total Amount (₹)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -48,18 +48,41 @@
             </table>
         </div>
 
-        <div class="text-center mt-3">
-            <button type="submit" class="btn btn-success btn-lg px-5 fw-bold shadow" {% if is_locked %} disabled {% endif %}>
+        <div class="mt-4">
+            <!-- Changed type="submit" to type="button" and added an onclick handler to trigger our JS confirmation dialog -->
+            <button type="button" id="confirmAllBtn" class="btn btn-success btn-lg px-5 fw-bold shadow"
+                    onclick="showConfirmationModal()" {% if is_locked %} disabled {% endif %}>
                 {% if is_locked %} <i class="bi bi-check-circle-fill me-2"></i>COLLECTION LOCKED {% else %} <i class="bi bi-save me-2"></i>SAVE COLLECTION {% endif %}
             </button>
         </div>
     </form>
 </div>
 
-<div class="d-flex justify-content-start align-items-center">
-    <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4 shadow-sm">
+<div class="mt-3">
+    <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">
         <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
     </a>
+</div>
+
+<!-- Confirmation Modal Structure (Requires Bootstrap 5 JS/CSS for full functionality) -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirm Collection Save</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to save the cash and UPI collections?
+                Please ensure all amounts are correct before confirming.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <!-- This button actually submits the form -->
+                <button type="button" class="btn btn-success" onclick="submitForm()">Save Changes</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -67,6 +90,26 @@
         const cash = parseFloat(document.getElementById('cash_' + id).value) || 0;
         const upi = parseFloat(document.getElementById('upi_' + id).value) || 0;
         document.getElementById('total_' + id).innerText = (cash + upi).toFixed(2);
+    }
+
+    // Function to show the Bootstrap modal
+    function showConfirmationModal() {
+        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'), {
+            keyboard: false
+        });
+        confirmationModal.show();
+    }
+
+    // Function to submit the form once confirmed
+    function submitForm() {
+        // Close the modal if it's open
+        const modalElement = document.getElementById('confirmationModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+            modalInstance.hide();
+        }     
+        // Submit the form
+        document.getElementById('collectionForm').submit();
     }
 </script>
 {% endblock %}
