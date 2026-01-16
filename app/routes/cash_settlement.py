@@ -62,7 +62,7 @@ def cash_view():
                 })
             db.commit()
             is_updated = True
-            success_message = "Expected cash amounts have been successfully saved to the database."
+            success_message = "Expected cash amounts saved successfully!"
 
         return render_template("cash_settlement.html",
                                stock_date=open_day.stock_date,

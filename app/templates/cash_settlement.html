@@ -16,7 +16,7 @@
 <div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-4 p-3">
     <i class="bi bi-lock-fill fs-5 me-2"></i>
     <div>
-        <strong>Cash Records Locked:</strong> System-derived totals are saved. These will be used to reconcile actual cash deposits.
+        <strong>Locked:</strong> Cash records saved successfully. These will be used to reconcile actual cash deposits.
     </div>
 </div>
 {% endif %}
@@ -29,7 +29,7 @@
                     <th class="text-start">Delivery Boy</th>
                     <th>Regular Refill</th>
                     <th>NC (New Connection)</th>
-                    <th>DBC (Double Bottle)</th>
+                    <th>DBC (Double Bottle Connection)</th>
                     <th class="text-warning">TV-Out Refund</th>
                     <th class="bg-success text-white">Final Expected</th>
                 </tr>
@@ -52,7 +52,7 @@
     <form method="POST" class="mt-4">
         {% if is_updated %}
             <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold" disabled>
-                <i class="bi bi-shield-check me-2"></i>CASH TOTALS SAVED
+                <i class="bi bi-shield-check me-2"></i>CASH TOTAL SAVED
             </button>
         {% else %}
             <button type="submit" class="btn btn-success btn-lg w-100 fw-bold shadow">

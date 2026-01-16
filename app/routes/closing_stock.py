@@ -44,7 +44,15 @@ def closing_view():
             FROM daily_stock_summary s
             JOIN cylinder_types t ON s.cylinder_type_id = t.cylinder_type_id
             WHERE s.stock_day_id = :s_id
-            ORDER BY t.cylinder_type_id
+            ORDER BY 
+                    CASE t.code
+                        WHEN '14.2KG' THEN 1
+                        WHEN '19KG' THEN 2
+                        WHEN '10KG' THEN 3
+                        WHEN '5KG BLUE' THEN 4
+                        WHEN '5KG RED' THEN 5
+                        ELSE 6
+                    END
         """), {"s_id": s_id}).fetchall()
 
         issues_raw = db.execute(text("""

@@ -9,6 +9,47 @@
     input[type="number"] { width: 50px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-weight: bold; }
     .flash-message { transition: opacity 0.6s ease; }
     .locked-overlay { opacity: 0.5; pointer-events: none; filter: grayscale(50%); }
+    .buttons-and-totals-container {
+    display: flex;
+    align-items: center; /* Changed from flex-end for better vertical alignment */
+    justify-content: flex-end; /* Pushes content to the right */
+    gap: 15px;
+    margin-top: 20px;
+    width: 100%;
+    }
+    .total-summary-box {
+        background: linear-gradient(135deg, #62a7e0 0%, #764ba2 100%);
+        width: fit-content; /* Shrinks box to fit its contents */
+        max-width: 600px;    /* Prevents it from getting too wide on large screens */
+        color: white;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        margin-left: auto;   /* Extra insurance to keep it on the right */
+    }
+
+    .total-boxes {
+        display: flex;
+        gap: 8px;           /* Slightly reduced gap for a tighter look */
+        justify-content: flex-end; 
+        flex-wrap: nowrap;  /* Prevents boxes from breaking into new lines */
+    }
+
+    .category-box {
+        background: rgba(255,255,255,0.15);
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
+        padding: 8px 12px;  /* Reduced padding for a smaller footprint */
+        text-align: center;
+        min-width: 80px;    /* Slightly smaller min-width */
+    }
+
+    .category-value {
+        font-size: 1.4em;   /* Scaled down from 1.8em to keep box compact */
+        font-weight: 700;
+        color: #fff;
+    }
+
 </style>
 
 <div class="mb-4 d-flex justify-content-between align-items-center">
@@ -44,7 +85,7 @@
                     <tr>
                         <th rowspan="2" class="bg-light">Delivery Boy</th>
                         {% for ct in types %}
-                        <th colspan="4" class="type-header">{{ ct.code }}</th>
+                        <th colspan="4" class="type-header">{{ ct.cylinder_type }}</th>
                         {% endfor %}
                     </tr>
                     <tr>
@@ -74,13 +115,14 @@
         </div>
     </div>
 
-    <div class="mt-4">
-        {% if is_finalized %}
+    <div class="buttons-and-totals-container">
+        <div>
+            {% if is_finalized %}
             <div class="alert alert-secondary d-inline-block fw-bold shadow-sm mb-3">
                 <i class="bi bi-lock-fill me-2"></i> Records Finalized (Read Only)
             </div>
         {% elif is_saved or no_movement %}
-            <div class="alert alert-success w-50 text-start fw-bold shadow-sm mb-3">
+            <div class="alert alert-success w-100 text-start fw-bold shadow-sm mb-3">
                 <i class="bi bi-check-circle-fill me-2"></i> Delivery Transactions Confirmed for Today.
             </div>
             <button type="submit" name="reset_db" class="btn btn-danger btn-lg px-4 fw-bold shadow mb-3" 
@@ -96,6 +138,33 @@
 
         <div class="d-block">
             <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
+        </div>
+        </div>
+        
+        {# TOTAL SUMMARY SECTION - NEXT TO BUTTONS #}
+        <div class="total-summary-box">
+            <div class="total-boxes">
+                <div class="category-box">
+                    <div class="category-label fw-bold">Refill</div>
+                    <div class="category-value" id="totalRefill">0</div>
+                </div>
+                <div class="category-box">
+                    <div class="category-label fw-bold">NC</div>
+                    <div class="category-value" id="totalNC">0</div>
+                </div>
+                <div class="category-box">
+                    <div class="category-label fw-bold">DBC</div>
+                    <div class="category-value" id="totalDBC">0</div>
+                </div>
+                <div class="category-box">
+                    <div class="category-label fw-bold">TV-Out</div>
+                    <div class="category-value" id="totalTVOut">0</div>
+                </div>
+                <div class="category-box" style="background: rgba(255,255,255,0.25); border: 3px solid rgba(255, 255, 255, 0.5);">
+                    <div class="category-label fw-bold">Grand Total</div>
+                    <div class="category-value" id="grandTotal">0</div>
+                </div>
+            </div>
         </div>
     </div>
 </form>
@@ -123,7 +192,52 @@ document.addEventListener('DOMContentLoaded', function() {
     var confirmModalEl = document.getElementById('confirmAllModal');
     var confirmModal = new bootstrap.Modal(confirmModalEl);
     var confirmYes = document.getElementById('confirmAllYes');
-    var form = document.getElementById('deliveryForm'); 
+    var form = document.getElementById('deliveryForm');
+
+    // Function to calculate and update totals
+    function updateTotals() {
+        let totalRefill = 0;
+        let totalNC = 0;
+        let totalDBC = 0;
+        let totalTVOut = 0;
+
+        // Get all input fields
+        const inputs = document.querySelectorAll('.del-input');
+        inputs.forEach(input => {
+            const name = input.getAttribute('name');
+            const value = parseInt(input.value) || 0;
+
+            if (name.includes('_REFILL')) {
+                totalRefill += value;
+            } else if (name.includes('_NC')) {
+                totalNC += value;
+            } else if (name.includes('_DBC')) {
+                totalDBC += value;
+            } else if (name.includes('_TVOUT')) {
+                totalTVOut += value;
+            }
+        });
+
+        // Calculate Grand Total
+        const grandTotal = totalRefill + totalNC + totalDBC + totalTVOut;
+
+        // Update display boxes
+        document.getElementById('totalRefill').textContent = totalRefill;
+        document.getElementById('totalNC').textContent = totalNC;
+        document.getElementById('totalDBC').textContent = totalDBC;
+        document.getElementById('totalTVOut').textContent = totalTVOut;
+        document.getElementById('grandTotal').textContent = grandTotal;
+    }
+
+    // Add event listeners to all input fields for dynamic updates
+    const inputs = document.querySelectorAll('.del-input');
+    inputs.forEach(input => {
+        input.addEventListener('input', updateTotals);
+        input.addEventListener('change', updateTotals);
+    });
+
+    // Initial calculation on page load
+    updateTotals();
 
     // Handle Modal Trigger
     if (confirmBtn) {
@@ -153,6 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 table.classList.remove('locked-overlay');
             }
+            updateTotals();
         });
     }
 

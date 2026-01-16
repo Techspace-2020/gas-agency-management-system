@@ -84,7 +84,15 @@ def iocl_view():
             FROM cylinder_types ct
             JOIN daily_stock_summary dss ON dss.cylinder_type_id = ct.cylinder_type_id
             WHERE dss.stock_day_id = :s_id
-            ORDER BY ct.cylinder_type_id
+            ORDER BY 
+                    CASE ct.code
+                        WHEN '14.2KG' THEN 1
+                        WHEN '19KG' THEN 2
+                        WHEN '10KG' THEN 3
+                        WHEN '5KG BLUE' THEN 4
+                        WHEN '5KG RED' THEN 5
+                        ELSE 6
+                    END
         """), {"s_id": s_id}).fetchall()
 
         total_received = sum(row.item_receipt for row in rows)

@@ -44,7 +44,15 @@ def summary_view():
             FROM cylinder_types ct
             LEFT JOIN daily_stock_summary ods ON ods.cylinder_type_id = ct.cylinder_type_id AND ods.stock_day_id = :open_id
             LEFT JOIN daily_stock_summary pds ON pds.cylinder_type_id = ct.cylinder_type_id AND pds.stock_day_id = :prev_id
-            ORDER BY ct.code
+            ORDER BY 
+                    CASE ct.code
+                        WHEN '14.2KG' THEN 1
+                        WHEN '19KG' THEN 2
+                        WHEN '10KG' THEN 3
+                        WHEN '5KG BLUE' THEN 4
+                        WHEN '5KG RED' THEN 5
+                        ELSE 6
+                    END
         """), {"open_id": open_day.stock_day_id, "prev_id": prev_day.stock_day_id if prev_day else 0}).fetchall()
 
         return render_template("opening_stock_summary.html", rows=rows, is_confirmed=is_confirmed, stock_date=open_day.stock_date)

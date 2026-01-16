@@ -52,22 +52,23 @@
 <!--                    <th class="ps-4">ID</th>-->
                     <th>Cylinder Code</th>
                     <th>Category</th>
-                    <th class="text-end pe-4">Status</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
                 {% for c in cylinder_types %}
                 <tr>
 <!--                    <td class="ps-4 text-muted">#{{ c.cylinder_type_id }}</td>-->
-                    <td><span class="fw-bold">{{ c.code }}</span></td>
+                    <td><span class="fw-bold">{{ c.cylinder_type }}</span></td>
                     <td>
                         <span class="badge {{ 'bg-info text-dark' if c.category == 'DOMESTIC' else 'bg-warning text-dark' }}">
                             {{ c.category }}
                         </span>
                     </td>
-                    <td class="text-end pe-4">
+                    <!-- <td class="text-end pe-4">
                         <span class="text-success small fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Active</span>
-                    </td>
+                    </td> -->
+                    <td><span class="text-success small fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Active</span></td>
                 </tr>
                 {% endfor %}
             </tbody>
