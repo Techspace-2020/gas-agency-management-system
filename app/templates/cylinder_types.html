@@ -20,7 +20,7 @@
 {% block title %}Cylinder Types - Veena Indane{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold mb-0">Cylinder Types Master</h2>
         <p class="text-muted">Manage stock categories and cylinder codes.</p>
@@ -28,12 +28,26 @@
     <a href="{{ url_for('cylinder_types.download_cylinder_types') }}" class="btn btn-dark shadow-sm">
         <i class="bi bi-download me-2"></i>Export Report
     </a>
+</div> -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0">Cylinder Types Master</h2>   
+        <p class="text-muted">Manage stock categories and cylinder codes.</p>
+    </div>
+    
+    <!-- Grouping Date and Button to keep them on the right -->
+    <div class="d-flex align-items-center gap-3">
+        <span class="badge bg-dark p-2">Date: {{ stock_date }}</span>
+        <a href="{{ url_for('cylinder_types.download_cylinder_types') }}" class="btn btn-outline-dark shadow-sm">
+            <i class="bi bi-download me-2"></i>Export Report
+        </a>
+    </div>
 </div>
 
-<div class="card shadow-sm border-0">
+<div class="card shadow-sm border-0 mx-auto" style="max-width: 1200px;">
     <div class="card-body p-0">
-        <table class="table table-hover mb-0 align-middle">
-            <thead class="table-light">
+        <table class="table table-bordered mb-0 align-middle mb-0">
+            <thead class="table-dark align-middle">
                 <tr>
 <!--                    <th class="ps-4">ID</th>-->
                     <th>Cylinder Code</th>
