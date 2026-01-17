@@ -30,15 +30,17 @@
                     <tr>
                         <td class="text-start fw-bold">{{ entity.name }}</td>
                         <td>
-                            <input type="number" step="0.01" class="form-control text-center"
+                            <input type="number" class="form-control text-center"
                                    id="cash_{{ entity.delivery_boy_id }}" name="cash_{{ entity.delivery_boy_id }}"
                                    value="{{ saved.cash_amount if saved else 0 }}"
+                                   min="0" onfocus="if(this.value=='0') this.value='';" onblur="if(this.value=='') this.value='0';"
                                    oninput="updateRow('{{ entity.delivery_boy_id }}')" {% if is_locked %} readonly {% endif %}>
                         </td>
                         <td>
-                            <input type="number" step="0.01" class="form-control text-center"
+                            <input type="number" class="form-control text-center"
                                    id="upi_{{ entity.delivery_boy_id }}" name="upi_{{ entity.delivery_boy_id }}"
                                    value="{{ saved.upi_amount if saved else 0 }}"
+                                   min="0" onfocus="if(this.value=='0') this.value='';" onblur="if(this.value=='') this.value='0';"
                                    oninput="updateRow('{{ entity.delivery_boy_id }}')" {% if is_locked %} readonly {% endif %}>
                         </td>
                         <td class="bg-light fw-bold fs-5">₹<span id="total_{{ entity.delivery_boy_id }}">{{ "{:.2f}".format(saved.total_deposited if saved else 0.00) }}</span></td>

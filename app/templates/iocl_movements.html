@@ -80,12 +80,14 @@
                         <td>
                             <input type="number" name="receipt_{{ r.cylinder_type_id }}"
                                    class="form-control text-center iocl-input" value="{{ r.item_receipt }}"
-                                   min="0" {% if not is_editable or is_finalized or has_data %}readonly{% endif %}>
+                                   min="0" onfocus="if(this.value=='0') this.value='';" onblur="if(this.value=='') this.value='0';"
+                                   {% if not is_editable or is_finalized or has_data %}readonly{% endif %}>
                         </td>
                         <td>
                             <input type="number" name="return_{{ r.cylinder_type_id }}"
                                    class="form-control text-center iocl-input" value="{{ r.item_return }}"
-                                   min="0" {% if not is_editable or is_finalized or has_data %}readonly{% endif %}>
+                                   min="0" onfocus="if(this.value=='0') this.value='';" onblur="if(this.value=='') this.value='0';"
+                                   {% if not is_editable or is_finalized or has_data %}readonly{% endif %}>
                         </td>
                     </tr>
                     {% endfor %}

@@ -48,7 +48,8 @@
                         <td class="text-primary fw-bold">{{ r.prev_vehicle_empty }}</td>
                         <td>
                             <input type="number" name="actual_{{ r.delivery_boy_id }}_{{ r.cylinder_type_id }}"
-                                   class="form-control text-center fw-bold" value="{{ r.expected_empty }}" min="0" required>
+                                   class="form-control text-center fw-bold" value="{{ r.expected_empty }}" min="0" 
+                                   onfocus="if(this.value=='0') this.value='';" onblur="if(this.value=='') this.value='0';" required>
                         </td>
                     </tr>
                     {% endfor %}
