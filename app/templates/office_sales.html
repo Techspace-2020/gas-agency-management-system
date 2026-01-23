@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary border-0 shadow-sm">
+                <i class="bi bi-arrow-left-circle-fill me-1"></i> Dashboard
+            </a>
+            <div>
+                <h2 class="fw-bold mb-0">Office Counter Sales & Inventory</h2>
+                <small class="text-muted">Manage stock movement and direct counter sales</small>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-primary px-3 py-2">Stock Date: {{ stock_date }}</span>
+
+            {% if not is_finalized %}
+            <button type="button" class="btn btn-danger fw-bold shadow-sm" onclick="showFinalizeConfirm()">
+                <i class="bi bi-snow2 me-1"></i> Finalize Office Sales
+            </button>
+            {% else %}
+            <span class="badge bg-secondary px-3 py-2"><i class="bi bi-lock-fill me-1"></i> SALES FROZEN</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {# --- Inventory Overview Table --- #}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-dark text-white py-3">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2"></i>Current Office Inventory Breakdown</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle text-center mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th rowspan="2" class="align-middle">Cylinder</th>
+                            <th colspan="4" class="bg-primary bg-opacity-10">Regular Refill</th>
+                            <th colspan="4" class="bg-success bg-opacity-10">New Connection (NC)</th>
+                            <th colspan="4" class="bg-info bg-opacity-10">Double Bottle (DBC)</th>
+                            <th rowspan="2" class="align-middle">Action</th>
+                        </tr>
+                        <tr class="small fw-bold">
+                            <th title="Previous Day Closing">Opn</th><th title="Received Today">Rcv</th><th>Sold</th><th>Bal</th>
+                            <th title="Previous Day Closing">Opn</th><th title="Received Today">Rcv</th><th>Sold</th><th>Bal</th>
+                            <th title="Previous Day Closing">Opn</th><th title="Received Today">Rcv</th><th>Sold</th><th>Bal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in office_stock %}
+                        {% set refill_bal = item.closing_refill %}
+                        {% set nc_bal = item.closing_nc %}
+                        {% set dbc_bal = item.closing_dbc %}
+                        <tr>
+                            <td class="fw-bold text-dark">{{ item.code }}</td>
+
+                            {# Refill Data #}
+                            <td class="text-muted">{{ item.opening_refill }}</td>
+                            <td>{{ item.received_refill }}</td>
+                            <td>{{ item.sold_refill }}</td>
+                            <td class="fw-bold text-primary">{{ refill_bal }}</td>
+
+                            {# NC Data #}
+                            <td class="text-muted">{{ item.opening_nc }}</td>
+                            <td>{{ item.received_nc }}</td>
+                            <td>{{ item.sold_nc }}</td>
+                            <td class="fw-bold text-success">{{ nc_bal }}</td>
+
+                            {# DBC Data #}
+                            <td class="text-muted">{{ item.opening_dbc }}</td>
+                            <td>{{ item.received_dbc }}</td>
+                            <td>{{ item.sold_dbc }}</td>
+                            <td class="fw-bold text-info">{{ dbc_bal }}</td>
+
+                            <td>
+                                {% if is_finalized %}
+                                <button class="btn btn-sm btn-outline-secondary px-3 fw-bold" disabled>
+                                    <i class="bi bi-lock"></i> Locked
+                                </button>
+                                {% else %}
+                                <button class="btn btn-sm btn-primary px-3 fw-bold"
+                                        onclick="openSaleModal('{{ item.cylinder_type_id }}', '{{ item.code }}', {{ refill_bal }}, {{ nc_bal }}, {{ dbc_bal }})">
+                                    <i class="bi bi-plus-circle me-1"></i> Sale
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# --- Record Sale Modal --- #}
+<div class="modal fade" id="saleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content border-0 shadow-lg" method="POST">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Record Sale: <span id="modalCylName"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" name="cylinder_type_id" id="modalCylId">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">1. Select Sale Type</label>
+                    <select name="sale_type" id="saleTypeSelect" class="form-select form-select-lg border-primary" onchange="updateMaxQty()">
+                        <option value="REFILL">Regular Refill</option>
+                        <option value="NC">New Connection (NC)</option>
+                        <option value="DBC">Double Bottle (DBC)</option>
+                    </select>
+                    <div id="stockNotice" class="form-text mt-2 fw-bold text-primary"></div>
+                </div>
+
+                <div class="alert alert-secondary d-flex justify-content-between align-items-center mb-4">
+                    <span class="fw-bold text-uppercase small">Estimated Total:</span>
+                    <span class="h4 mb-0 fw-bold text-dark">₹ <span id="displayTotal">0.00</span></span>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold">2. Quantity Sold</label>
+                        <input type="number" name="qty_sold" id="modalQtyInput" class="form-control form-control-lg" value="1" min="1" oninput="calculateTotal()">
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-success">Cash Amount</label>
+                        <input type="number" step="0.01" name="cash" id="modalCash" class="form-control" value="0">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-info">UPI Amount</label>
+                        <input type="number" step="0.01" name="upi" id="modalUpi" class="form-control" value="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary px-4 fw-bold">Confirm Sale</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# --- Finalize Confirmation Modal --- #}
+<div class="modal fade" id="finalizeConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Finalize</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <p class="h5 mb-3">Freeze all office sales for today?</p>
+                <p class="text-muted small">This action will lock all sales records. You will not be able to record any more counter sales until the next operational day is started.</p>
+            </div>
+            <div class="modal-footer bg-light justify-content-center">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('office_sales.finalize_office_sales') }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Yes, Freeze Sales</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+const priceMap = {{ price_map | tojson }};
+let currentStockMap = { REFILL: 0, NC: 0, DBC: 0 };
+let activeCylId = null;
+
+function showFinalizeConfirm() {
+    new bootstrap.Modal(document.getElementById('finalizeConfirmModal')).show();
+}
+
+function openSaleModal(id, name, refillBal, ncBal, dbcBal) {
+    activeCylId = id;
+    document.getElementById('modalCylId').value = id;
+    document.getElementById('modalCylName').innerText = name;
+    currentStockMap.REFILL = refillBal;
+    currentStockMap.NC = ncBal;
+    currentStockMap.DBC = dbcBal;
+
+    document.getElementById('saleTypeSelect').value = 'REFILL';
+    document.getElementById('modalQtyInput').value = 1;
+    document.getElementById('modalUpi').value = 0;
+
+    updateMaxQty();
+    new bootstrap.Modal(document.getElementById('saleModal')).show();
+}
+
+function calculateTotal() {
+    const type = document.getElementById('saleTypeSelect').value;
+    const qty = parseInt(document.getElementById('modalQtyInput').value) || 0;
+
+    if (activeCylId && priceMap[activeCylId]) {
+        const unitPrice = priceMap[activeCylId][type];
+        const total = unitPrice * qty;
+        document.getElementById('displayTotal').innerText = total.toFixed(2);
+        document.getElementById('modalCash').value = total.toFixed(2);
+    }
+}
+
+function updateMaxQty() {
+    const type = document.getElementById('saleTypeSelect').value;
+    const maxVal = currentStockMap[type];
+    const qtyInput = document.getElementById('modalQtyInput');
+    const notice = document.getElementById('stockNotice');
+
+    qtyInput.setAttribute('max', maxVal);
+    notice.innerText = `Available for ${type}: ${maxVal} units`;
+
+    if (maxVal <= 0) {
+        notice.className = 'form-text mt-2 fw-bold text-danger';
+        qtyInput.value = 0;
+    } else {
+        notice.className = 'form-text mt-2 fw-bold text-primary';
+        if(qtyInput.value == 0) qtyInput.value = 1;
+    }
+    calculateTotal();
+}
+</script>
+{% endblock %}

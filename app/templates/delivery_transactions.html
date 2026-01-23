@@ -9,47 +9,11 @@
     input[type="number"] { width: 50px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-weight: bold; }
     .flash-message { transition: opacity 0.6s ease; }
     .locked-overlay { opacity: 0.5; pointer-events: none; filter: grayscale(50%); }
-    .buttons-and-totals-container {
-    display: flex;
-    align-items: center; /* Changed from flex-end for better vertical alignment */
-    justify-content: flex-end; /* Pushes content to the right */
-    gap: 15px;
-    margin-top: 20px;
-    width: 100%;
-    }
-    .total-summary-box {
-        background: linear-gradient(135deg, #62a7e0 0%, #764ba2 100%);
-        width: fit-content; /* Shrinks box to fit its contents */
-        max-width: 600px;    /* Prevents it from getting too wide on large screens */
-        color: white;
-        border-radius: 12px;
-        padding: 15px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-        margin-left: auto;   /* Extra insurance to keep it on the right */
-    }
-
-    .total-boxes {
-        display: flex;
-        gap: 8px;           /* Slightly reduced gap for a tighter look */
-        justify-content: flex-end; 
-        flex-wrap: nowrap;  /* Prevents boxes from breaking into new lines */
-    }
-
-    .category-box {
-        background: rgba(255,255,255,0.15);
-        border: 2px solid rgba(255,255,255,0.3);
-        border-radius: 8px;
-        padding: 8px 12px;  /* Reduced padding for a smaller footprint */
-        text-align: center;
-        min-width: 80px;    /* Slightly smaller min-width */
-    }
-
-    .category-value {
-        font-size: 1.4em;   /* Scaled down from 1.8em to keep box compact */
-        font-weight: 700;
-        color: #fff;
-    }
-
+    .buttons-and-totals-container { display: flex; align-items: center; justify-content: flex-end; gap: 15px; margin-top: 20px; width: 100%; }
+    .total-summary-box { background: linear-gradient(135deg, #62a7e0 0%, #764ba2 100%); width: fit-content; max-width: 600px; color: white; border-radius: 12px; padding: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); margin-left: auto; }
+    .total-boxes { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: nowrap; }
+    .category-box { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 8px 12px; text-align: center; min-width: 80px; }
+    .category-value { font-size: 1.4em; font-weight: 700; color: #fff; }
 </style>
 
 <div class="mb-4 d-flex justify-content-between align-items-center">
@@ -66,18 +30,15 @@
 {% endwith %}
 
 <form method="POST" id="deliveryForm">
-    {# NO MOVEMENT TOGGLE #}
     <div class="form-check form-switch mb-4 p-3 bg-light border rounded shadow-sm">
         <input class="form-check-input ms-0 me-3" type="checkbox" name="delivery_no_movement" id="delNoMovCheck"
                style="transform: scale(1.4);" {% if no_movement %}checked{% endif %}
                {% if is_finalized or is_saved %}disabled{% endif %}>
         <label class="form-check-label fw-bold text-primary" for="delNoMovCheck">
-            <i class="bi bi-person-x-fill me-2"></i> No Deliveries or Transactions Today
+            <i class="bi bi-person-x-fill me-2"></i> No Deliveries Today
         </label>
-        <div class="small text-muted ms-5">Enable this if no deliveries or transactions occurred today.</div>
     </div>
 
-    {# TABLE SECTION #}
     <div id="tableSection" class="{% if no_movement or is_finalized or is_saved %}locked-overlay{% endif %}">
         <div class="table-responsive">
             <table class="delivery-table">
@@ -103,13 +64,13 @@
                         <td class="bg-light fw-bold text-start">{{ b.name }}</td>
                         {% for ct in types %}
                             {% set row = issues.get((b.delivery_boy_id, ct.cylinder_type_id)) %}
-                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_REFILL" value="{{ row.regular_qty if row else 0 }}" min="0" 
+                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_REFILL" value="{{ row.regular_qty if row else 0 }}" min="0"
                                 onfocus="if(this.value=='0') this.value='';" onblur="if(this.value=='') this.value='0';" class="del-input" {% if is_finalized or is_saved %}readonly{% endif %}></td>
-                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_NC" value="{{ row.nc_qty if row else 0 }}" min="0" 
+                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_NC" value="{{ row.nc_qty if row else 0 }}" min="0"
                                 onfocus="if(this.value=='0') this.value='';" onblur="if(this.value=='') this.value='0';" class="del-input" {% if is_finalized or is_saved %}readonly{% endif %}></td>
-                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_DBC" value="{{ row.dbc_qty if row else 0 }}" min="0" 
+                            <td><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_DBC" value="{{ row.dbc_qty if row else 0 }}" min="0"
                                 onfocus="if(this.value=='0') this.value='';" onblur="if(this.value=='') this.value='0';" class="del-input" {% if is_finalized or is_saved %}readonly{% endif %}></td>
-                            <td class="tvout-col"><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_TVOUT" value="{{ row.tv_out_qty if row else 0 }}" min="0" 
+                            <td class="tvout-col"><input type="number" name="issue_{{ b.delivery_boy_id }}_{{ ct.cylinder_type_id }}_TVOUT" value="{{ row.tv_out_qty if row else 0 }}" min="0"
                                 onfocus="if(this.value=='0') this.value='';" onblur="if(this.value=='') this.value='0';" class="del-input" {% if is_finalized or is_saved %}readonly{% endif %}></td>
                         {% endfor %}
                     </tr>
@@ -122,69 +83,63 @@
     <div class="buttons-and-totals-container">
         <div>
             {% if is_finalized %}
-            <div class="alert alert-secondary d-inline-block fw-bold shadow-sm mb-3">
-                <i class="bi bi-lock-fill me-2"></i> Records Finalized (Read Only)
-            </div>
-        {% elif is_saved or no_movement %}
-            <div class="alert alert-success w-100 text-start fw-bold shadow-sm mb-3">
-                <i class="bi bi-check-circle-fill me-2"></i> Delivery Transactions Confirmed for Today.
-            </div>
-            <button type="submit" name="reset_db" class="btn btn-danger btn-lg px-4 fw-bold shadow mb-3" 
-                    onclick="return confirm('Resetting will clear all entries. Continue?')">
-                <i class="bi bi-arrow-counterclockwise me-1"></i> RESET & RE-ENTER
-            </button>
-        {% else %}
-            {# SAVE BUTTON: Triggers Modal instead of direct submit #}
-            <button type="button" id="confirmAllBtn" class="btn btn-success btn-lg px-5 fw-bold shadow mb-3">
-                CONFIRM TRANSACTIONS
-            </button>
-        {% endif %}
+                <div class="alert alert-secondary d-inline-block fw-bold shadow-sm mb-3"><i class="bi bi-lock-fill me-2"></i> Records Finalized</div>
+            {% elif is_saved or no_movement %}
+                <div class="alert alert-success w-100 text-start fw-bold shadow-sm mb-3"><i class="bi bi-check-circle-fill me-2"></i> Transactions Confirmed.</div>
+                <button type="button" class="btn btn-danger btn-lg px-4 fw-bold shadow mb-3" data-bs-toggle="modal" data-bs-target="#resetConfirmModal">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> RESET
+                </button>
+            {% else %}
+                <button type="button" id="confirmAllBtn" class="btn btn-success btn-lg px-5 fw-bold shadow mb-3">CONFIRM TRANSACTIONS</button>
+            {% endif %}
+            <div class="d-block"><a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a></div>
+        </div>
 
-        <div class="d-block">
-            <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
-        </div>
-        </div>
-        
-        {# TOTAL SUMMARY SECTION - NEXT TO BUTTONS #}
         <div class="total-summary-box">
             <div class="total-boxes">
-                <div class="category-box">
-                    <div class="category-label fw-bold">Refill</div>
-                    <div class="category-value" id="totalRefill">0</div>
-                </div>
-                <div class="category-box">
-                    <div class="category-label fw-bold">NC</div>
-                    <div class="category-value" id="totalNC">0</div>
-                </div>
-                <div class="category-box">
-                    <div class="category-label fw-bold">DBC</div>
-                    <div class="category-value" id="totalDBC">0</div>
-                </div>
-                <div class="category-box">
-                    <div class="category-label fw-bold">TV-Out</div>
-                    <div class="category-value" id="totalTVOut">0</div>
-                </div>
-                <div class="category-box" style="background: rgba(255,255,255,0.25); border: 3px solid rgba(255, 255, 255, 0.5);">
-                    <div class="category-label fw-bold">Grand Total</div>
-                    <div class="category-value" id="grandTotal">0</div>
-                </div>
+                <div class="category-box"><div class="category-label">Refill</div><div class="category-value" id="totalRefill">0</div></div>
+                <div class="category-box"><div class="category-label">NC</div><div class="category-value" id="totalNC">0</div></div>
+                <div class="category-box"><div class="category-label">DBC</div><div class="category-value" id="totalDBC">0</div></div>
+                <div class="category-box"><div class="category-label">TV-Out</div><div class="category-value" id="totalTVOut">0</div></div>
+                <div class="category-box" style="background: rgba(255,255,255,0.25); border: 2px solid rgba(255, 255, 255, 0.5);"><div class="category-label">Grand Total</div><div class="category-value" id="grandTotal">0</div></div>
             </div>
         </div>
     </div>
 </form>
 
-<!-- Confirmation Modal -->
+<div class="modal fade" id="resetConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold">Reset Confirmation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4 text-center">
+                <p class="fs-5 mb-0"><strong>Reset all entries?</strong></p>
+                <p class="text-muted">This will clear all quantities and enable editing again.</p>
+            </div>
+            <div class="modal-footer justify-content-center border-0 bg-light">
+                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('delivery_transactions.transactions_view') }}">
+                    <input type="hidden" name="reset_db" value="1">
+                    <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Yes, Reset</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="confirmAllModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Please confirm</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-success text-white">
+          <h5 class="modal-title fw-bold">Confirm Submission</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">Are you sure you want to save and confirm all delivery transactions?</div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-        <button type="button" id="confirmAllYes" class="btn btn-success">Yes, Confirm</button>
+      <div class="modal-body py-4 text-center fs-5">Save all entries? This will sync with Step 4.</div>
+      <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" id="confirmAllYes" class="btn btn-success px-4 fw-bold">Yes, Confirm</button>
       </div>
     </div>
   </div>
@@ -193,96 +148,31 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var confirmBtn = document.getElementById('confirmAllBtn');
-    var confirmModalEl = document.getElementById('confirmAllModal');
-    var confirmModal = new bootstrap.Modal(confirmModalEl);
+    var confirmModal = new bootstrap.Modal(document.getElementById('confirmAllModal'));
     var confirmYes = document.getElementById('confirmAllYes');
     var form = document.getElementById('deliveryForm');
 
-    // Function to calculate and update totals
     function updateTotals() {
-        let totalRefill = 0;
-        let totalNC = 0;
-        let totalDBC = 0;
-        let totalTVOut = 0;
-
-        // Get all input fields
-        const inputs = document.querySelectorAll('.del-input');
-        inputs.forEach(input => {
-            const name = input.getAttribute('name');
-            const value = parseInt(input.value) || 0;
-
-            if (name.includes('_REFILL')) {
-                totalRefill += value;
-            } else if (name.includes('_NC')) {
-                totalNC += value;
-            } else if (name.includes('_DBC')) {
-                totalDBC += value;
-            } else if (name.includes('_TVOUT')) {
-                totalTVOut += value;
-            }
+        let totals = {R: 0, N: 0, D: 0, T: 0};
+        document.querySelectorAll('.del-input').forEach(i => {
+            const val = parseInt(i.value) || 0;
+            if (i.name.includes('_REFILL')) totals.R += val;
+            else if (i.name.includes('_NC')) totals.N += val;
+            else if (i.name.includes('_DBC')) totals.D += val;
+            else if (i.name.includes('_TVOUT')) totals.T += val;
         });
-
-        // Calculate Grand Total
-        const grandTotal = totalRefill + totalNC + totalDBC + totalTVOut;
-
-        // Update display boxes
-        document.getElementById('totalRefill').textContent = totalRefill;
-        document.getElementById('totalNC').textContent = totalNC;
-        document.getElementById('totalDBC').textContent = totalDBC;
-        document.getElementById('totalTVOut').textContent = totalTVOut;
-        document.getElementById('grandTotal').textContent = grandTotal;
+        document.getElementById('totalRefill').textContent = totals.R;
+        document.getElementById('totalNC').textContent = totals.N;
+        document.getElementById('totalDBC').textContent = totals.D;
+        document.getElementById('totalTVOut').textContent = totals.T;
+        document.getElementById('grandTotal').textContent = totals.R + totals.N + totals.D + totals.T;
     }
 
-    // Add event listeners to all input fields for dynamic updates
-    const inputs = document.querySelectorAll('.del-input');
-    inputs.forEach(input => {
-        input.addEventListener('input', updateTotals);
-        input.addEventListener('change', updateTotals);
-    });
-
-    // Initial calculation on page load
+    document.querySelectorAll('.del-input').forEach(i => i.addEventListener('input', updateTotals));
     updateTotals();
 
-    // Handle Modal Trigger
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', function() {
-            confirmModal.show();
-        });
-    }
-
-    // Handle Actual Submission from Modal
-    if (confirmYes) {
-        confirmYes.addEventListener('click', function() {
-            confirmYes.disabled = true;
-            confirmYes.innerText = 'Saving...';
-            form.submit();
-        });
-    }
-
-    // Switch Toggle logic
-    const delNoMovCheck = document.getElementById('delNoMovCheck');
-    if (delNoMovCheck) {
-        delNoMovCheck.addEventListener('change', function() {
-            const table = document.getElementById('tableSection');
-            const inputs = document.querySelectorAll('.del-input');
-            if(this.checked) {
-                table.classList.add('locked-overlay');
-                inputs.forEach(i => i.value = 0);
-            } else {
-                table.classList.remove('locked-overlay');
-            }
-            updateTotals();
-        });
-    }
-
-    // Auto-hide flash messages
-    setTimeout(function() {
-        const messages = document.querySelectorAll('.flash-message');
-        messages.forEach(function(msg) {
-            msg.style.opacity = "0";
-            setTimeout(() => msg.remove(), 600);
-        });
-    }, 3000);
+    if (confirmBtn) confirmBtn.onclick = () => confirmModal.show();
+    if (confirmYes) confirmYes.onclick = () => { confirmYes.disabled = true; form.submit(); };
 });
 </script>
 {% endblock %}

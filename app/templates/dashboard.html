@@ -1,6 +1,34 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    .btn-report-fixed {
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+    }
+    .preview-table-container {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .table-header-sticky {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 1;
+    }
+    .flash-message {
+        animation: fadeOut 5s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { opacity: 0; display: none; }
+    }
+</style>
+
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h2 fw-bold">Daily Operations</h1>
@@ -19,6 +47,7 @@
         {% endfor %}{% endif %}
     {% endwith %}
 
+    {# --- Stock Handling Section --- #}
     {% if day and is_day_closed %}
     <div class="row justify-content-center py-4 mb-5">
         <div class="col-md-10">
@@ -26,14 +55,12 @@
                 <div class="mb-4"><i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i></div>
                 <h2 class="fw-bold">Stock & Money Updated!</h2>
                 <p class="text-muted fs-5 mb-4">Records for {{ day.stock_date }} are finalized.</p>
-
                 <div class="d-grid gap-2 col-md-6 mx-auto">
                     <a href="{{ url_for('stock_day.create_new_day') }}" class="btn btn-primary btn-lg fw-bold">START NEW DAY</a>
                 </div>
             </div>
         </div>
     </div>
-
     {% elif day %}
     <h4 class="fw-bold mb-3 text-primary border-bottom pb-2">Stock Handling</h4>
     <div class="row g-3 mb-5">
@@ -58,6 +85,22 @@
             </div>
         </div>
         {% endfor %}
+    </div>
+
+    <h4 class="fw-bold mb-3 text-info border-bottom pb-2">Office Sales</h4>
+    <div class="row g-3 mb-5">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100 p-3 border-start border-4 border-info">
+                <h6 class="fw-bold text-info small mb-2">1. Office Counter Sales</h6>
+                {% if not progress['deliveries'] %}
+                    <button class="btn btn-sm mt-auto btn-secondary disabled" style="opacity: 0.6;"><i class="bi bi-lock-fill me-1"></i> Locked</button>
+                {% else %}
+                    <a href="{{ url_for('office_sales.manage_office_sales') }}" class="btn btn-sm mt-auto btn-info text-white">
+                        <i class="bi bi-shop me-1"></i> Record Counter Sales
+                    </a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <h4 class="fw-bold mb-3 text-success border-bottom pb-2">Cash Handling</h4>
@@ -87,54 +130,233 @@
 
     <div class="card shadow-sm border-0 mt-4 mb-5">
         <div class="card-header bg-dark text-white p-3">
-            <h5 class="mb-0 fw-bold">Past Records & Reports</h5>
+            <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-bar-graph me-2"></i>History & Transaction Reports</h5>
         </div>
         <div class="card-body p-4">
-            <div class="row">
-                <div class="col-md-6 border-end">
-                    <h6 class="fw-bold text-primary mb-3">Stock Report</h6>
-                    <form action="{{ url_for('stock_day.generate_report') }}" method="POST" class="row g-2 align-items-end">
-                        <input type="hidden" name="report_type" value="stock">
-                        <div class="col-sm-7">
-                            <label class="small text-muted mb-1">Select Date</label>
-                            <input type="date" name="selected_date" class="form-control" required>
-                        </div>
-                        <div class="col-sm-5">
-                            <button type="submit" class="btn btn-outline-primary w-50 fw-bold">Generate Stock</button>
-                        </div>
-                    </form>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="small text-muted fw-bold mb-1">1. Choose Report Type</label>
+                    <select id="report_type" class="form-select shadow-sm" required>
+                        <option value="" disabled selected>-- Select Report Type --</option>
+                        <optgroup label="Daily Summaries">
+                            <option value="stock">Daily Stock Summary Report</option>
+                            <option value="cash">Daily Cash Reconciliation Report</option>
+                        </optgroup>
+                        <optgroup label="Detailed Transaction Logs">
+                            <option value="delivery_issues">Delivery Issues Log (Boy-wise)</option>
+                            <option value="iocl_inward">IOCL Inward Stock Log</option>
+                            <option value="actual_cash">Actual Cash Collection Log</option>
+                            <option value="office_sales">Office Counter Inventory Log</option>
+                        </optgroup>
+                    </select>
                 </div>
 
-                <div class="col-md-6 ps-md-4">
-                    <h6 class="fw-bold text-success mb-3">Cash Report</h6>
-                    <form action="{{ url_for('stock_day.generate_report') }}" method="POST" class="row g-2 align-items-end">
-                        <input type="hidden" name="report_type" value="cash">
-                        <div class="col-sm-7">
-                            <label class="small text-muted mb-1">Select Date</label>
-                            <input type="date" name="selected_date" class="form-control" required>
-                        </div>
-                        <div class="col-sm-5">
-                            <button type="submit" class="btn btn-outline-success w-50 fw-bold">Generate Cash</button>
-                        </div>
-                    </form>
+                <div class="col-md-3">
+                    <label class="small text-muted fw-bold mb-1">2. Select Date</label>
+                    <input type="date" id="selected_date" class="form-control shadow-sm" max="{{ today }}" required>
+                </div>
+
+                <div class="col-md-5 d-flex gap-2">
+                    <button type="button" onclick="fetchPreview()" class="btn btn-info text-white w-100 fw-bold shadow-sm btn-report-fixed">
+                        <i class="bi bi-search me-2"></i>READ DATA
+                    </button>
+
+                    <div class="dropdown w-100 d-none" id="downloadDropdown">
+                        <button class="btn btn-primary w-100 fw-bold shadow-sm btn-report-fixed dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-download me-2"></i>DOWNLOAD
+                        </button>
+                        <ul class="dropdown-menu shadow w-100">
+                            <li><a class="dropdown-item fw-bold" href="#" onclick="triggerDownload('excel')"><i class="bi bi-file-earmark-excel me-2 text-success"></i> Excel Format</a></li>
+                            <li><a class="dropdown-item fw-bold" href="#" onclick="triggerDownload('pdf')"><i class="bi bi-file-earmark-pdf me-2 text-danger"></i> PDF Format</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="previewContainer" class="mt-4 d-none">
+                <hr>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-secondary mb-0" id="previewTitle">Data Preview</h6>
+                </div>
+                <div class="table-responsive rounded border shadow-sm preview-table-container">
+                    <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.75rem;">
+                        <thead class="table-light table-header-sticky">
+                            <tr id="previewHeader"></tr>
+                        </thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header py-2" id="statusHeader">
+                <h6 class="modal-title fw-bold text-white">Notification</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4 text-center" id="statusModalBody"></div>
+            <div class="modal-footer border-0 justify-content-center pt-0">
+                <button type="button" class="btn btn-secondary px-4 btn-sm fw-bold" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Wait 3 seconds, then fade out
-        setTimeout(function() {
-            const messages = document.querySelectorAll('.flash-message');
-            messages.forEach(function(msg) {
-                // Use Bootstrap's built-in transition if available, or manual fade
-                msg.style.transition = "opacity 0.6s ease";
-                msg.style.opacity = "0";
-                setTimeout(() => msg.remove(), 600);
-            });
-        }, 1500); // 3000ms = 3 seconds
+        const dateInput = document.getElementById('selected_date');
+        const todayStr = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('max', todayStr);
     });
+
+    function showNotification(message, isError = false) {
+        const body = document.getElementById('statusModalBody');
+        const header = document.getElementById('statusHeader');
+        body.innerText = message;
+        header.className = isError ? 'modal-header bg-danger py-2' : 'modal-header bg-primary py-2';
+        statusModal.show();
+    }
+
+    function fetchPreview() {
+        const type = document.getElementById('report_type').value;
+        const dateStr = document.getElementById('selected_date').value;
+        const container = document.getElementById('previewContainer');
+        const dlGroup = document.getElementById('downloadDropdown');
+
+        if (!type || !dateStr) {
+            showNotification("Please select both report type and date.", true);
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('report_type', type);
+        formData.append('selected_date', dateStr);
+
+        fetch('/preview-report', {
+            method: 'POST',
+            body: formData
+        })
+        .then(async response => {
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || "Server error.");
+            }
+            return data;
+        })
+        .then(res => {
+            const header = document.getElementById('previewHeader');
+            const body = document.getElementById('previewBody');
+
+            header.innerHTML = '';
+            body.innerHTML = '';
+
+            if (res.data && res.data.length > 0) {
+                let keys;
+                if (type === 'actual_cash') {
+                    keys = ["Delivery Boy", "Cash", "UPI", "Total"];
+                } else if (type === 'delivery_issues') {
+                    keys = ["Delivery Boy", "Cylinder", "Refill", "NC", "DBC", "TV Out", "Total Qty"];
+                } else if (type === 'cash') {
+                    keys = ["Delivery Boy", "Opening", "Expected", "Deposited", "Closing", "Status"];
+                } else if (type === 'stock') {
+                    keys = ["Cylinder", "Op Filled", "Op Empty", "Inward", "Outward", "Sales", "NC", "DBC", "TV Out", "Defective", "Cl Filled", "Cl Empty", "Total Stock"];
+                } else if (type === 'office_sales') {
+                    // UPDATED: All 14 inventory tracking columns
+                    keys = [
+                        "Cylinder",
+                        "Opn Refill", "Rcv Refill", "Sold Refill", "Bal Refill",
+                        "Opn NC", "Rcv NC", "Sold NC", "Bal NC",
+                        "Opn DBC", "Rcv DBC", "Sold DBC", "Bal DBC",
+                        "Total Bal"
+                    ];
+                } else if (type === 'iocl_inward') {
+                    keys = ["Cylinder", "Receipt", "Return"];
+                } else {
+                    keys = Object.keys(res.data[0]);
+                }
+
+                // Render Header
+                keys.forEach(key => {
+                    const th = document.createElement('th');
+                    th.className = "text-uppercase small fw-bold py-2";
+                    th.innerText = key;
+                    header.appendChild(th);
+                });
+
+                // Render Body
+                res.data.forEach(row => {
+                    const tr = document.createElement('tr');
+
+                    // Specific mapping for Backend to Frontend keys
+                    const dataMap = {
+                        "Op Filled": "opening_filled", "Op Empty": "opening_empty", "Inward": "item_receipt",
+                        "Outward": "item_return", "Sales": "sales_regular", "NC": "nc_qty", "DBC": "dbc_qty",
+                        "TV Out": "tv_out_qty", "Defective": "defective_empty_vehicle",
+                        "Cl Filled": "closing_filled", "Cl Empty": "closing_empty", "Total Stock": "total_stock",
+                        "Receipt": "item_receipt", "Return": "item_return"
+                    };
+
+                    keys.forEach(key => {
+                        const td = document.createElement('td');
+                        if (key === "Total Qty" && type === 'delivery_issues') {
+                            const val = (parseInt(row["Refill"]) || 0) + (parseInt(row["NC"]) || 0) + (parseInt(row["DBC"]) || 0);
+                            td.innerText = val;
+                            td.className = "fw-bold text-primary";
+                        } else {
+                            // If key exists directly in row, use it, otherwise check dataMap
+                            let val = row[key] !== undefined ? row[key] : (row[dataMap[key]] !== undefined ? row[dataMap[key]] : '0');
+                            td.innerText = val;
+                        }
+                        tr.appendChild(td);
+                    });
+                    body.appendChild(tr);
+                });
+
+                container.classList.remove('d-none');
+                dlGroup.classList.remove('d-none');
+            } else {
+                showNotification("No records found for the selected criteria.");
+                container.classList.add('d-none');
+                dlGroup.classList.add('d-none');
+            }
+        })
+        .catch(err => {
+            showNotification(err.message, true);
+            container.classList.add('d-none');
+            dlGroup.classList.add('d-none');
+        });
+    }
+
+    function triggerDownload(format) {
+        const type = document.getElementById('report_type').value;
+        const date = document.getElementById('selected_date').value;
+
+        if (!type || !date) {
+            showNotification("Please select both report type and date.", true);
+            return;
+        }
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('stock_day.generate_report') }}";
+
+        const fields = { 'report_type': type, 'selected_date': date, 'file_format': format };
+        for (const [key, value] of Object.entries(fields)) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
 </script>
 {% endblock %}

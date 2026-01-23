@@ -1,33 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Delivery Boys Master</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>
-        .sidebar { background: #212529; min-height: 100vh; color: white; padding: 20px; }
-        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px; border-radius: 5px; }
-        .sidebar a:hover, .sidebar a.active { background: #343a40; color: white; }
-    </style>
-</head>
-<body class="bg-light">
-
 {% extends "base.html" %}
 
 {% block title %}Delivery Boys - Veena Indane{% endblock %}
 
 {% block content %}
-<!-- <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold">Delivery Boys Master</h2>
-    <a href="{{ url_for('delivery_boys.download_delivery_boys') }}" class="btn btn-dark shadow-sm">
-        <i class="bi bi-download me-2"></i>Generate Report
-    </a>
-</div> -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold mb-0">Delivery Boys Master</h2>
-    
-    <!-- Grouping Date and Button to keep them on the right -->
     <div class="d-flex align-items-center gap-3">
         <span class="badge bg-dark p-2">Date: {{ stock_date }}</span>
         <a href="{{ url_for('delivery_boys.download_delivery_boys') }}" class="btn btn-outline-dark shadow-sm">
@@ -38,7 +15,7 @@
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}{% for category, message in messages %}
-        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
+        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show shadow-sm">
             {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     {% endfor %}{% endif %}
@@ -58,7 +35,7 @@
                     <label class="form-label">Mobile Number</label>
                     <input type="text" name="mobile" class="form-control" maxlength="10" placeholder="9900XXXXXX" required>
                 </div>
-                <button type="submit" class="btn btn-primary w-50 fw-bold">Add to System</button>
+                <button type="submit" class="btn btn-primary w-100 fw-bold">Add to System</button>
             </form>
         </div>
     </div>
@@ -72,7 +49,9 @@
                         <tr>
                             <th>Name</th>
                             <th>Mobile</th>
+                            <th class="text-end">Pending Balance</th>
                             <th class="text-center">Status</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -80,10 +59,32 @@
                         <tr>
                             <td><span class="fw-bold text-dark">{{ d.name }}</span></td>
                             <td>{{ d.mobile }}</td>
+                            <td class="text-end">
+                                <span class="{% if d.current_balance > 0.01 %}text-danger fw-bold{% elif d.current_balance < -0.01 %}text-success{% else %}text-muted{% endif %}">
+                                    ₹{{ "{:,.2f}".format(d.current_balance) }}
+                                </span>
+                            </td>
                             <td class="text-center">
                                 <span class="badge {{ 'bg-success' if d.is_active else 'bg-secondary' }}">
                                     {{ 'Active' if d.is_active else 'Inactive' }}
                                 </span>
+                            </td>
+                            <td class="text-center">
+                                <form method="POST" id="toggleForm-{{ d.delivery_boy_id }}" style="display:inline;">
+                                    <input type="hidden" name="action" value="toggle_status">
+                                    <input type="hidden" name="boy_id" value="{{ d.delivery_boy_id }}">
+                                    <input type="hidden" name="current_status" value="{{ d.is_active }}">
+                                    {% if d.is_active %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                onclick="showConfirmModal('{{ d.delivery_boy_id }}', '{{ d.name }}')">
+                                            <i class="bi bi-person-x me-1"></i> Deactivate
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-person-check me-1"></i> Activate
+                                        </button>
+                                    {% endif %}
+                                </form>
                             </td>
                         </tr>
                         {% endfor %}
@@ -93,7 +94,36 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-</body>
-</html>
+<div class="modal fade" id="confirmDeactivateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Deactivation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4 text-center">
+                <p class="mb-1 fs-5 fw-semibold" id="modalMessage"></p>
+                <p class="text-muted mb-0 small">Deactivated staff will no longer appear in Step 3 selection.</p>
+                <p class="text-danger mt-2 small fw-bold">Note: Balance must be zero to deactivate.</p>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirmBtn" class="btn btn-danger px-4 fw-bold">Deactivate Staff</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let pendingFormId = null;
+function showConfirmModal(boyId, boyName) {
+    pendingFormId = `toggleForm-${boyId}`;
+    document.getElementById('modalMessage').innerHTML = `Deactivate <span class="text-danger">${boyName}</span>?`;
+    new bootstrap.Modal(document.getElementById('confirmDeactivateModal')).show();
+}
+document.getElementById('confirmBtn').addEventListener('click', () => {
+    if (pendingFormId) document.getElementById(pendingFormId).submit();
+});
+</script>
+{% endblock %}

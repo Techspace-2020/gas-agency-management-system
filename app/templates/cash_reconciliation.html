@@ -10,19 +10,25 @@
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}{% for category, message in messages %}
-        <div class="alert alert-{{ category if category != 'error' else 'danger' }} shadow-sm">
+        <div class="alert alert-{{ category if category != 'error' else 'danger' }} shadow-sm alert-dismissible fade show" role="alert">
             {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     {% endfor %}{% endif %}
 {% endwith %}
 
 <div class="card shadow-sm border-0 p-4 mb-4">
+    <div class="alert alert-info border-0 shadow-sm py-2 mb-4">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <small><strong>Note:</strong> Negative Closing Balance indicates <strong>Excess Cash</strong> (Collected today for future delivery).</small>
+    </div>
+
     <form method="POST" id="reconciliationForm">
         <div class="table-responsive">
             <table class="table table-bordered align-middle text-end">
                 <thead class="table-dark text-center">
                     <tr>
-                        <th class="text-start">Delivery Boy Name</th>
+                        <th class="text-start">Delivery Boy / Entity</th>
                         <th>Opening Balance</th>
                         <th>Expected Today</th>
                         <th>Deposited Today</th>
@@ -32,22 +38,37 @@
                 </thead>
                 <tbody>
                     {% for row in rows %}
+                    {# Logic: (Opening + Expected) - Deposited #}
                     {% set closing_val = row.opening_bal + row.expected_bal - row.deposited_bal %}
                     <tr>
-                        <td class="text-start fw-bold">{{ row.name }}</td>
+                        <td class="text-start fw-bold">
+                            {% if row.name.lower() == 'office' %}
+                                <i class="bi bi-building me-2 text-primary"></i>
+                            {% else %}
+                                <i class="bi bi-person me-2 text-secondary"></i>
+                            {% endif %}
+                            {{ row.name }}
+                        </td>
                         <td class="text-muted">₹{{ "{:,.2f}".format(row.opening_bal) }}</td>
                         <td>₹{{ "{:,.2f}".format(row.expected_bal) }}</td>
                         <td>₹{{ "{:,.2f}".format(row.deposited_bal) }}</td>
-                        <td class="fw-bold table-light {% if closing_val != 0 %}text-danger{% endif %}">
+
+                        {# Corrected: Removed '| abs' to show negative values. Green for Excess (<0), Red for Pending (>0) #}
+                        <td class="fw-bold table-light {% if closing_val < 0 %}text-success{% elif closing_val > 0 %}text-danger{% endif %}">
                             ₹{{ "{:,.2f}".format(closing_val) }}
                         </td>
+
                         <td class="text-center">
                             {% if row.balance_status == 'SETTLED' %}
-                                <span class="badge bg-success px-3">SETTLED</span>
+                                <span class="badge bg-success px-3 w-75 shadow-sm">SETTLED</span>
+                            {% elif row.balance_status == 'EXCESS' %}
+                                <span class="badge bg-primary px-3 w-75 shadow-sm">EXCESS</span>
                             {% else %}
-                                <span class="badge bg-warning text-dark px-3">PENDING</span>
+                                <span class="badge bg-warning text-dark px-3 w-75 shadow-sm">PENDING</span>
                             {% endif %}
                         </td>
+
+                        {# Hidden inputs for POST data #}
                         <input type="hidden" name="opening_{{ row.delivery_boy_id }}" value="{{ row.opening_bal }}">
                         <input type="hidden" name="expected_{{ row.delivery_boy_id }}" value="{{ row.expected_bal }}">
                         <input type="hidden" name="deposited_{{ row.delivery_boy_id }}" value="{{ row.deposited_bal }}">
@@ -76,37 +97,40 @@
     </a>
 
     {% if has_updated %}
-        <!-- Trigger Button for Modal -->
-        <button type="button" 
-                class="btn btn-danger btn-lg px-5 fw-bold shadow" 
-                data-bs-toggle="modal" 
+        <button type="button"
+                class="btn btn-danger btn-lg px-5 fw-bold shadow"
+                data-bs-toggle="modal"
                 data-bs-target="#confirmCloseModal">
             FINALIZE & CLOSE DAY <i class="bi bi-power ms-2"></i>
         </button>
     {% else %}
-        <button class="btn btn-secondary btn-lg px-5 fw-bold shadow" disabled>
+        <button class="btn btn-secondary btn-lg px-5 fw-bold shadow" disabled title="Please update balances first">
             FINALIZE & CLOSE DAY <i class="bi bi-lock-fill ms-2"></i>
         </button>
     {% endif %}
 </div>
 
-<!-- Bootstrap Confirmation Modal -->
 <div class="modal fade" id="confirmCloseModal" tabindex="-1" aria-labelledby="confirmCloseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="confirmCloseModalLabel">Confirm Day Close</h5>
+                <h5 class="modal-title fw-bold" id="confirmCloseModalLabel">Confirm Day Close</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body py-4">
-                <p class="fs-5 mb-0 text-center">
-                    <strong>CLOSE DAY?</strong><br>
-                    Remaining balances will carry forward to the next day.
-                </p>
+                <div class="text-center">
+                    <i class="bi bi-exclamation-octagon text-danger display-4 mb-3"></i>
+                    <p class="fs-5 mb-0 text-dark">
+                        <strong>Are you sure you want to close the day?</strong>
+                    </p>
+                    <p class="text-muted mt-2">
+                        Closing the day will finalize all records. Any <strong>Excess</strong> (negative) or <strong>Pending</strong> (positive) balances will be carried forward.
+                    </p>
+                </div>
             </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
-                <a href="{{ url_for('cash_reconciliation.day_close') }}" class="btn btn-danger px-4 fw-bold">
+            <div class="modal-footer justify-content-center border-0 bg-light">
+                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+                <a href="{{ url_for('cash_reconciliation.day_close') }}" class="btn btn-danger px-4 fw-bold shadow-sm">
                     YES, FINALIZE & CLOSE
                 </a>
             </div>
@@ -114,46 +138,36 @@
     </div>
 </div>
 
-
-<!-- Confirmation Modal Structure (Requires Bootstrap 5 JS/CSS for full functionality) -->
 <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
-    <div class="modal-dialog  modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="confirmationModalLabel">Confirm Reconciliation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="confirmationModalLabel">Confirm Reconciliation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                Are you sure you want to save the Cash Reconciliation?
-                Please ensure all amounts are correct before confirming.
+            <div class="modal-body py-3">
+                <p class="mb-0">Please ensure all <strong>Deposited Amounts</strong> match your physical cash register before confirming.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <!-- This button actually submits the form -->
-                <button type="button" class="btn btn-success" onclick="submitForm()">Save Changes</button>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success fw-bold px-4 shadow-sm" onclick="submitForm()">Confirm & Save</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Function to show the Bootstrap modal
     function showConfirmationModal() {
-        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'), {
-            keyboard: false
-        });
+        const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
         confirmationModal.show();
     }
 
-    // Function to submit the form once confirmed
     function submitForm() {
-        // Close the modal if it's open
         const modalElement = document.getElementById('confirmationModal');
         const modalInstance = bootstrap.Modal.getInstance(modalElement);
         if (modalInstance) {
             modalInstance.hide();
-        }     
-        // Submit the form
+        }
         document.getElementById('reconciliationForm').submit();
     }
 </script>

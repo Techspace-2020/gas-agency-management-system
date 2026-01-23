@@ -17,6 +17,7 @@ from app.routes.closing_stock import closing_stock_bp
 from app.routes.cash_settlement import cash_settlement_bp
 from app.routes.cash_collection import cash_collection_bp
 from app.routes.cash_reconciliation import cash_reconciliation_bp
+from app.routes.office_sales import office_sales_bp
 
 def create_app():
     app = Flask(__name__)
@@ -56,6 +57,7 @@ def create_app():
     app.register_blueprint(cash_collection_bp)
     app.register_blueprint(cash_reconciliation_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(office_sales_bp)
 
     return app
 

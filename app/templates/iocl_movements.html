@@ -37,14 +37,11 @@
         {% if is_finalized %}<span class="badge bg-danger ms-2">FINALIZED</span>{% endif %}
     </div>
 
-    {# RESET BUTTON: Only shown if not finalized #}
+    {# RESET BUTTON: Triggers Custom Modal instead of native confirm() #}
     {% if is_editable and has_data and not is_finalized %}
-        <form action="{{ url_for('iocl_movements.delete_movements') }}" method="POST">
-            <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm"
-                    onclick="return confirm('Reset all values? This will enable the Confirm button again.');">
-                <i class="bi bi-arrow-counterclockwise me-1"></i> RESET & RE-ENTER
-            </button>
-        </form>
+        <button type="button" class="btn btn-danger btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#resetConfirmModal">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> RESET & RE-ENTER
+        </button>
     {% endif %}
 </div>
 {% endif %}
@@ -95,16 +92,14 @@
             </table>
         </div>
 
-        {# ACTION AREA: Button or Success Alert #}
+        {# ACTION AREA #}
         <div class="mt-4">
             {% if is_editable and not is_finalized %}
                 {% if has_data %}
-                    <!-- ALERT replaces the button when data exists -->
                     <div class="alert alert-success d-inline-block fw-bold shadow-sm border-start border-4 border-success px-4">
                         <i class="bi bi-check-circle-fill me-2"></i> IOCL Movements Confirmed for Today.
                     </div>
                 {% else %}
-                    <!-- BUTTON shown only when data does not exist -->
                     <button type="button" id="confirmAllBtn" class="btn btn-primary btn-lg px-5 fw-bold shadow">
                         CONFIRM IOCL STOCK
                     </button>
@@ -114,7 +109,7 @@
                     <i class="bi bi-lock-fill me-2"></i>RECORDS LOCKED
                 </button>
             {% endif %}
-            
+
             <div class="mt-3">
                 <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a>
             </div>
@@ -122,18 +117,42 @@
     </form>
 </div>
 
-<!-- Confirmation Modal -->
+<div class="modal fade" id="resetConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Reset Confirmation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="fs-5 mb-0 text-center">
+                    <strong>Reset all values?</strong><br>
+                    This will enable the Confirm button again.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center border-0 bg-light">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('iocl_movements.delete_movements') }}" method="POST">
+                    <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Yes, Reset</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="confirmAllModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
         <h5 class="modal-title">Please confirm</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">Are you sure you want to confirm IOCL Stock?</div>
-      <div class="modal-footer">
+      <div class="modal-body py-4 text-center fs-5">
+          Are you sure you want to confirm IOCL Stock?
+      </div>
+      <div class="modal-footer justify-content-center">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-        <button type="button" id="confirmAllYes" class="btn btn-primary">Yes, Confirm</button>
+        <button type="button" id="confirmAllYes" class="btn btn-primary px-4 fw-bold">Yes, Confirm</button>
       </div>
     </div>
   </div>
@@ -144,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var confirmBtn = document.getElementById('confirmAllBtn');
     var confirmModal = new bootstrap.Modal(document.getElementById('confirmAllModal'));
     var confirmYes = document.getElementById('confirmAllYes');
-    var form = document.getElementById('ioclForm'); 
+    var form = document.getElementById('ioclForm');
 
     if (confirmBtn) {
         confirmBtn.addEventListener('click', function() {
@@ -160,7 +179,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Toggle logic for the switch
     const noMovCheck = document.getElementById('noMovCheck');
     if (noMovCheck) {
         noMovCheck.addEventListener('change', function() {

@@ -4,70 +4,135 @@
 
 {% block content %}
 <div class="mb-4 d-flex justify-content-between align-items-center">
-    <h2 class="fw-bold text-center">Step 5: Expected Cash Calculation</h2>
+    <div class="d-flex align-items-center gap-3">
+        <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary border-0 shadow-sm">
+            <i class="bi bi-arrow-left-circle-fill me-1"></i> Dashboard
+        </a>
+        <h2 class="fw-bold mb-0">Step 5: Expected Cash Calculation</h2>
+    </div>
     <span class="badge bg-dark fs-6">Stock Date: {{ stock_date }}</span>
 </div>
 
-{% if success_message %}
-    <div class="alert alert-success shadow-sm mb-4">{{ success_message }}</div>
-{% endif %}
+{# Status Notifications #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ category }} shadow-sm mb-4">{{ message }}</div>
+    {% endfor %}{% endif %}
+{% endwith %}
 
 {% if is_updated %}
 <div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-4 p-3">
-    <i class="bi bi-lock-fill fs-5 me-2"></i>
+    <i class="bi bi-lock-fill fs-5 me-2 text-primary"></i>
     <div>
-        <strong>Locked:</strong> Cash records saved successfully. These will be used to reconcile actual cash deposits.
+        <strong>Finalized:</strong> Connection fees and TV-Out refunds are office-handled. Delivery boys are only responsible for refill cash.
     </div>
 </div>
 {% endif %}
 
-<div class="card shadow-sm border-0 p-3 mb-4">
-    <div class="table-responsive">
-        <table class="table table-bordered align-middle text-end">
-            <thead class="table-dark text-center">
+{# --- Delivery Boy Section --- #}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-primary text-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-people-fill me-2"></i>Delivery Boy Refill Dues</h5>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
                 <tr>
-                    <th class="text-start">Delivery Boy</th>
-                    <th>Regular Refill</th>
-                    <th>NC (New Connection)</th>
-                    <th>DBC (Double Bottle Connection)</th>
-                    <th class="text-warning">TV-Out Refund</th>
-                    <th class="bg-success text-white">Final Expected</th>
+                    <th class="ps-4">Delivery Boy</th>
+                    <th class="text-end pe-4">Total Refill Amount to Deposit</th>
                 </tr>
             </thead>
             <tbody>
-                {% for row in results %}
+                {% for row in staff_results %}
                 <tr>
-                    <td class="text-start fw-bold">{{ row.delivery_boy }}</td>
-                    <td>₹{{ "{:,.2f}".format(row.regular_amt) }}</td>
-                    <td>₹{{ "{:,.2f}".format(row.nc_amt) }}</td>
-                    <td>₹{{ "{:,.2f}".format(row.dbc_amt) }}</td>
-                    <td class="text-danger fw-bold">- ₹{{ "{:,.2f}".format(row.tv_refund) }}</td>
-                    <td class="bg-light fw-bold text-success">₹{{ "{:,.2f}".format(row.final_expected) }}</td>
+                    <td class="ps-4 fw-bold text-dark">{{ row.delivery_boy }}</td>
+                    <td class="text-end pe-4 fw-bold text-success">₹{{ "{:,.2f}".format(row.regular_amt | default(0)) }}</td>
                 </tr>
                 {% endfor %}
+                {% if not staff_results %}
+                <tr><td colspan="2" class="text-center py-3 text-muted">No staff deliveries recorded for today.</td></tr>
+                {% endif %}
             </tbody>
         </table>
     </div>
+</div>
 
-    <form method="POST" class="mt-4">
+{# --- Office Summary Section --- #}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-dark text-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-building-fill me-2"></i>Office Counter Summary</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle text-end">
+                <thead class="table-light text-center">
+                    <tr>
+                        <th class="text-start">Category</th>
+                        <th>NC Connections</th>
+                        <th>DBC Connections</th>
+                        <th class="text-danger">TV-Out Refunds</th>
+                        <th class="bg-light">Net Connection Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {# Row 1: Global Connections (Staff) #}
+                    <tr>
+                        <td class="text-start">Global Transactions (All Staff)</td>
+                        <td>₹{{ "{:,.2f}".format(total_nc | default(0)) }}</td>
+                        <td>₹{{ "{:,.2f}".format(total_dbc | default(0)) }}</td>
+                        <td class="text-danger">- ₹{{ "{:,.2f}".format(total_tv | default(0)) }}</td>
+                        <td class="fw-bold text-primary">₹{{ "{:,.2f}".format(net_office_connection_cash | default(0)) }}</td>
+                    </tr>
+                    {# Row 2: Pure Office Sales (Refill + Counter NC/DBC) #}
+                    <tr class="table-info">
+                        <td class="text-start fw-bold">Office Counter Sales</td>
+                        <td colspan="3" class="text-center text-muted small">Sales recorded directly at office window</td>
+                        <td class="fw-bold">₹{{ "{:,.2f}".format(pure_office_sales | default(0)) }}</td>
+                    </tr>
+                </tbody>
+                <tfoot class="table-secondary">
+                    <tr>
+                        <th colspan="4" class="text-start ps-4">GRAND TOTAL EXPECTED AT OFFICE COUNTER</th>
+                        <th class="text-end pe-3 fs-5 text-dark">
+                            {# This now displays the combined total calculated in Python (e.g., ₹11,207.00) #}
+                            ₹{{ "{:,.2f}".format(office_expected | default(0)) }}
+                        </th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <p class="small text-muted mt-2 mb-0">
+            <i class="bi bi-info-circle me-1"></i> Note: Expected amount combines pure counter sales and global staff connection fees.
+        </p>
+    </div>
+</div>
+
+{# --- Finalize Action --- #}
+<div class="card-footer border-0 bg-transparent p-0">
+    {% if not office_finalized %}
+    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-4">
+        <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+        <div><strong>Step 3 Not Complete:</strong> Please finalize Office Sales before locking cash records.</div>
+    </div>
+    {% endif %}
+
+    <form method="POST">
         {% if is_updated %}
-            <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold" disabled>
-                <i class="bi bi-shield-check me-2"></i>CASH TOTAL SAVED
+            <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold shadow-sm py-3" disabled>
+                <i class="bi bi-shield-check me-2"></i>CASH RECORDS FINALIZED
             </button>
         {% else %}
-            <button type="submit" class="btn btn-success btn-lg w-100 fw-bold shadow">
-                <i class="bi bi-save me-2"></i>CONFIRM & UPDATE CASH TOTALS
+            <button type="submit" class="btn btn-success btn-lg w-100 fw-bold shadow py-3"
+                    {% if not office_finalized %}disabled{% endif %}>
+                <i class="bi bi-save me-2"></i>CONFIRM & FINALIZE CASH RECORDS
             </button>
         {% endif %}
     </form>
 </div>
 
-<div class="d-flex justify-content-between">
-    <a href="{{ url_for('closing_stock.closing_view') }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-2"></i>Back to Reconciliation
-    </a>
-    <a href="/dashboard" class="btn btn-dark">
-        Return to Dashboard
+<div class="d-flex justify-content-between mt-4">
+    <a href="{{ url_for('office_sales.manage_office_sales') }}" class="btn btn-outline-secondary px-4">
+        <i class="bi bi-arrow-left me-2"></i>Back to Office Sales
     </a>
 </div>
 {% endblock %}
