@@ -36,7 +36,7 @@ def cylinder_types():
             """)
         ).fetchall()
 
-        return render_template("cylinder_types.html", cylinder_types=cylinder_types, stock_date=open_day.stock_date if open_day else None)
+        return render_template("cylinder_types.html", cylinder_types=cylinder_types, stock_date=open_day.stock_date if open_day else "No open day")
     finally:
         db.close()
 

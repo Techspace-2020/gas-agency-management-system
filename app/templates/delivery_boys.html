@@ -3,6 +3,17 @@
 {% block title %}Delivery Boys - Veena Indane{% endblock %}
 
 {% block content %}
+<style>
+    .flash-message {
+        animation: fadeOut 5s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { opacity: 0; display: none; }
+    }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold mb-0">Delivery Boys Master</h2>
     <div class="d-flex align-items-center gap-3">
@@ -15,7 +26,7 @@
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}{% for category, message in messages %}
-        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show shadow-sm">
+        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show shadow-sm w-50 flash-message">
             {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     {% endfor %}{% endif %}
@@ -35,7 +46,7 @@
                     <label class="form-label">Mobile Number</label>
                     <input type="text" name="mobile" class="form-control" maxlength="10" placeholder="9900XXXXXX" required>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 fw-bold">Add to System</button>
+                <button type="submit" class="btn btn-primary w-50 fw-bold">Add to System</button>
             </form>
         </div>
     </div>
@@ -49,7 +60,7 @@
                         <tr>
                             <th>Name</th>
                             <th>Mobile</th>
-                            <th class="text-end">Pending Balance</th>
+                            <th class="text-center">Pending Balance</th>
                             <th class="text-center">Status</th>
                             <th class="text-center">Actions</th>
                         </tr>
@@ -59,32 +70,38 @@
                         <tr>
                             <td><span class="fw-bold text-dark">{{ d.name }}</span></td>
                             <td>{{ d.mobile }}</td>
-                            <td class="text-end">
+                            <td class="text-center">
                                 <span class="{% if d.current_balance > 0.01 %}text-danger fw-bold{% elif d.current_balance < -0.01 %}text-success{% else %}text-muted{% endif %}">
                                     ₹{{ "{:,.2f}".format(d.current_balance) }}
                                 </span>
                             </td>
                             <td class="text-center">
-                                <span class="badge {{ 'bg-success' if d.is_active else 'bg-secondary' }}">
+                                <span class="badge {{ 'bg-success' if d.is_active else 'bg-warning' }}">
                                     {{ 'Active' if d.is_active else 'Inactive' }}
                                 </span>
                             </td>
                             <td class="text-center">
-                                <form method="POST" id="toggleForm-{{ d.delivery_boy_id }}" style="display:inline;">
-                                    <input type="hidden" name="action" value="toggle_status">
-                                    <input type="hidden" name="boy_id" value="{{ d.delivery_boy_id }}">
-                                    <input type="hidden" name="current_status" value="{{ d.is_active }}">
-                                    {% if d.is_active %}
-                                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                                onclick="showConfirmModal('{{ d.delivery_boy_id }}', '{{ d.name }}')">
-                                            <i class="bi bi-person-x me-1"></i> Deactivate
-                                        </button>
-                                    {% else %}
-                                        <button type="submit" class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-person-check me-1"></i> Activate
-                                        </button>
-                                    {% endif %}
-                                </form>
+                                {% if d.name.lower() == 'office' %}                                   
+                                    <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" disabled title="System Protected">
+                                        <i class="bi bi-shield-lock me-1"></i> Locked
+                                    </button>
+                                {% else %}
+                                    <form method="POST" id="toggleForm-{{ d.delivery_boy_id }}" style="display:inline;">
+                                        <input type="hidden" name="action" value="toggle_status">
+                                        <input type="hidden" name="boy_id" value="{{ d.delivery_boy_id }}">
+                                        <input type="hidden" name="current_status" value="{{ d.is_active }}">                                    
+                                        {% if d.is_active %}
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="showConfirmModal('{{ d.delivery_boy_id }}', '{{ d.name }}')">
+                                                <i class="bi bi-person-x me-1"></i> Deactivate
+                                            </button>
+                                        {% else %}
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                <i class="bi bi-person-check me-1"></i> Activate
+                                            </button>
+                                        {% endif %}
+                                    </form>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -104,7 +121,7 @@
             </div>
             <div class="modal-body py-4 text-center">
                 <p class="mb-1 fs-5 fw-semibold" id="modalMessage"></p>
-                <p class="text-muted mb-0 small">Deactivated staff will no longer appear in Step 3 selection.</p>
+                <p class="text-muted mb-0 small">Deactivated staff will no longer part of delivery transactions.</p>
                 <p class="text-danger mt-2 small fw-bold">Note: Balance must be zero to deactivate.</p>
             </div>
             <div class="modal-footer bg-light border-0">
@@ -117,13 +134,13 @@
 
 <script>
 let pendingFormId = null;
-function showConfirmModal(boyId, boyName) {
-    pendingFormId = `toggleForm-${boyId}`;
-    document.getElementById('modalMessage').innerHTML = `Deactivate <span class="text-danger">${boyName}</span>?`;
-    new bootstrap.Modal(document.getElementById('confirmDeactivateModal')).show();
-}
-document.getElementById('confirmBtn').addEventListener('click', () => {
-    if (pendingFormId) document.getElementById(pendingFormId).submit();
-});
+    function showConfirmModal(boyId, boyName) {
+        pendingFormId = `toggleForm-${boyId}`;
+        document.getElementById('modalMessage').innerHTML = `Deactivate <span class="text-danger">${boyName}</span>?`;
+        new bootstrap.Modal(document.getElementById('confirmDeactivateModal')).show();
+    }
+    document.getElementById('confirmBtn').addEventListener('click', () => {
+        if (pendingFormId) document.getElementById(pendingFormId).submit();
+    });
 </script>
 {% endblock %}

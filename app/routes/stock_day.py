@@ -247,6 +247,19 @@ def create_new_day():
         if request.method == "POST":
             selected_date = request.form.get("stock_date")
 
+            # --- Validation Logic Added Here ---
+            # Check if a stock day for the selected date already exists
+            existing_day = db.execute(
+                text("SELECT stock_day_id FROM stock_days WHERE stock_date = :sd"),
+                {"sd": selected_date}
+            ).fetchone()
+
+            if existing_day:
+                # If it exists, flash an error message and redirect back to the creation page
+                flash(f"Error: A stock day for {selected_date} already exists.", "error")
+                return redirect(url_for('stock_day.create_new_day'))
+            # --- End of Validation Logic ---
+
             res = db.execute(
                 text("INSERT INTO stock_days (stock_date, status, delivery_no_movement) VALUES (:sd, 'OPEN', 0)"),
                 {"sd": selected_date})
@@ -273,6 +286,7 @@ def create_new_day():
             """), {"new_id": new_id, "last_id": last_day.stock_day_id if last_day else -1})
 
             db.commit()
+            flash(f"New stock day for {selected_date} created successfully.", "success")
             return redirect(url_for('stock_day.dashboard'))
 
         return render_template("create_stock_day.html", next_available_date=next_available, today=today_val)

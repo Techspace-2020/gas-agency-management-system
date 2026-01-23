@@ -16,7 +16,7 @@
         <div class="col-md-5">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}{% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} shadow-sm">
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} shadow-sm flash-message">
                         {{ message }}
                     </div>
                 {% endfor %}{% endif %}
@@ -58,5 +58,14 @@
     body { background-color: #f8f9fa; }
     .card { transition: transform 0.2s; }
     .card:hover { transform: translateY(-5px); }
+
+    .flash-message {
+        animation: fadeOut 8s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { opacity: 0; display: none; }
+    }
 </style>
 {% endblock %}

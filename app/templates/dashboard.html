@@ -20,7 +20,7 @@
         z-index: 1;
     }
     .flash-message {
-        animation: fadeOut 5s forwards;
+        animation: fadeOut 4s forwards;
     }
     @keyframes fadeOut {
         0% { opacity: 1; }
@@ -139,14 +139,14 @@
                     <select id="report_type" class="form-select shadow-sm" required>
                         <option value="" disabled selected>-- Select Report Type --</option>
                         <optgroup label="Daily Summaries">
-                            <option value="stock">Daily Stock Summary Report</option>
-                            <option value="cash">Daily Cash Reconciliation Report</option>
+                            <option value="stock">Daily stock summary report</option>
+                            <option value="cash">Daily cash reconciliation report</option>
                         </optgroup>
                         <optgroup label="Detailed Transaction Logs">
-                            <option value="delivery_issues">Delivery Issues Log (Boy-wise)</option>
-                            <option value="iocl_inward">IOCL Inward Stock Log</option>
-                            <option value="actual_cash">Actual Cash Collection Log</option>
-                            <option value="office_sales">Office Counter Inventory Log</option>
+                            <option value="delivery_issues">Delivery issues report(Delivery Boy's-wise)</option>
+                            <option value="iocl_inward">IOCL movement stock report</option>
+                            <option value="actual_cash">Actual cash collection report</option>
+                            <option value="office_sales">Office counter inventory report</option>
                         </optgroup>
                     </select>
                 </div>
@@ -157,15 +157,15 @@
                 </div>
 
                 <div class="col-md-5 d-flex gap-2">
-                    <button type="button" onclick="fetchPreview()" class="btn btn-info text-white w-100 fw-bold shadow-sm btn-report-fixed">
+                    <button type="button" onclick="fetchPreview()" class="btn btn-info text-white w-50 fw-bold shadow-sm btn-report-fixed">
                         <i class="bi bi-search me-2"></i>READ DATA
                     </button>
 
                     <div class="dropdown w-100 d-none" id="downloadDropdown">
-                        <button class="btn btn-primary w-100 fw-bold shadow-sm btn-report-fixed dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-primary w-50 fw-bold shadow-sm btn-report-fixed dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-download me-2"></i>DOWNLOAD
                         </button>
-                        <ul class="dropdown-menu shadow w-100">
+                        <ul class="dropdown-menu shadow w-50">
                             <li><a class="dropdown-item fw-bold" href="#" onclick="triggerDownload('excel')"><i class="bi bi-file-earmark-excel me-2 text-success"></i> Excel Format</a></li>
                             <li><a class="dropdown-item fw-bold" href="#" onclick="triggerDownload('pdf')"><i class="bi bi-file-earmark-pdf me-2 text-danger"></i> PDF Format</a></li>
                         </ul>
