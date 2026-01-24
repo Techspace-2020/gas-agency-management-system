@@ -116,7 +116,7 @@ def transactions_view():
                 """), {"s_id": s_id})
 
             db.commit()
-            flash("Delivery transactions and Office stock levels updated.", "success")
+            flash("Delivery transactions and Office stock updated successfully!.", "success")
             return redirect(url_for("delivery_transactions.transactions_view"))
 
         boys = db.execute(text("SELECT delivery_boy_id, name FROM delivery_boys WHERE is_active = 1 ORDER BY name")).fetchall()
@@ -186,13 +186,13 @@ def download_delivery_log(day_id):
             elements.append(t)
             doc.build(elements)
             output.seek(0)
-            return send_file(output, download_name=f"Delivery_Log_{report_date}.pdf", as_attachment=True, mimetype='application/pdf')
+            return send_file(output, download_name=f"Delivery_Transactions_{report_date}.pdf", as_attachment=True, mimetype='application/pdf')
         else:
             df = pd.DataFrame([dict(row._mapping) for row in results])
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                 df.to_excel(writer, index=False, sheet_name='Delivery_Issues')
             output.seek(0)
-            return send_file(output, download_name=f"Delivery_Log_{report_date}.xlsx", as_attachment=True)
+            return send_file(output, download_name=f"Delivery_Transactions_{report_date}.xlsx", as_attachment=True)
     finally:
         db.close()

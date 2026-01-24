@@ -160,7 +160,7 @@ def download_iocl_log(day_id):
 
             doc.build(elements)
             output.seek(0)
-            return send_file(output, download_name=f"IOCL_Log_{report_date}.pdf", as_attachment=True,
+            return send_file(output, download_name=f"IOCL_Movement_{report_date}.pdf", as_attachment=True,
                              mimetype='application/pdf')
 
         else:
@@ -170,7 +170,7 @@ def download_iocl_log(day_id):
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                 df.to_excel(writer, index=False, sheet_name='IOCL_Movements')
             output.seek(0)
-            return send_file(output, download_name=f"IOCL_Log_{report_date}.xlsx", as_attachment=True)
+            return send_file(output, download_name=f"IOCL_Movement_{report_date}.xlsx", as_attachment=True)
 
     finally:
         db.close()

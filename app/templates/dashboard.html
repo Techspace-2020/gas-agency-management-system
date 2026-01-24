@@ -207,9 +207,12 @@
 </div>
 
 <script>
-    const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
+    let statusModal;
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the modal after DOM is fully loaded
+        statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
+        
         const dateInput = document.getElementById('selected_date');
         const todayStr = new Date().toISOString().split('T')[0];
         dateInput.setAttribute('max', todayStr);
@@ -265,14 +268,14 @@
                 } else if (type === 'cash') {
                     keys = ["Delivery Boy", "Opening", "Expected", "Deposited", "Closing", "Status"];
                 } else if (type === 'stock') {
-                    keys = ["Cylinder", "Op Filled", "Op Empty", "Inward", "Outward", "Sales", "NC", "DBC", "TV Out", "Defective", "Cl Filled", "Cl Empty", "Total Stock"];
+                    keys = ["Cylinder", "Open Filled", "Open Empty", "Inward", "Outward", "Sales", "NC", "DBC", "TV Out", "Defective", "Close Filled", "Close Empty", "Total Stock"];
                 } else if (type === 'office_sales') {
                     // UPDATED: All 14 inventory tracking columns
                     keys = [
                         "Cylinder",
-                        "Opn Refill", "Rcv Refill", "Sold Refill", "Bal Refill",
-                        "Opn NC", "Rcv NC", "Sold NC", "Bal NC",
-                        "Opn DBC", "Rcv DBC", "Sold DBC", "Bal DBC",
+                        "Open Refill", "Rcv Refill", "Sold Refill", "Bal Refill",
+                        "Open NC", "Rcv NC", "Sold NC", "Bal NC",
+                        "Open DBC", "Rcv DBC", "Sold DBC", "Bal DBC",
                         "Total Bal"
                     ];
                 } else if (type === 'iocl_inward') {
@@ -321,7 +324,7 @@
                 container.classList.remove('d-none');
                 dlGroup.classList.remove('d-none');
             } else {
-                showNotification("No records found for the selected criteria.");
+                showNotification("No records found for the selected report type and date.");
                 container.classList.add('d-none');
                 dlGroup.classList.add('d-none');
             }

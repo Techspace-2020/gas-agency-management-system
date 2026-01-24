@@ -79,30 +79,31 @@ def dashboard():
 @login_required
 def preview_report():
     db = SessionLocal()
+
     try:
         report_type = request.form.get("report_type")
         selected_date_str = request.form.get("selected_date")
 
         if not report_type or not selected_date_str:
             return jsonify({"error": "Missing report type or date."}), 400
-
+                                         
         try:
             selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
         except ValueError:
             return jsonify({"error": "Invalid date format."}), 400
-
+                                         
         record = db.execute(text("SELECT stock_day_id, status FROM stock_days WHERE stock_date = :sd"),
                             {"sd": selected_date_str}).fetchone()
 
         if not record:
             return jsonify({"error": f"Error: No operation records exist for {selected_date_str}."}), 404
 
-        if record.status == 'OPEN' and report_type in ['stock', 'cash']:
+        if record.status == 'OPEN' and report_type in ['stock', 'cash', 'delivery_issues', 'actual_cash']:
             return jsonify({"error": "This day is still OPEN. Finalize the day to view Summary Reports."}), 400
-
+                                         
         s_id = record.stock_day_id
         data = []
-
+                                                       
         if report_type == 'actual_cash':
             results = db.execute(text("""
                 SELECT 'Office Counter' AS Delivery_Boy, 
@@ -191,11 +192,10 @@ def preview_report():
             } for r in results]
 
         if not data:
-            return jsonify({"error": "No records found for the selected criteria."}), 404
-
+            return jsonify({"error": "No records found for the selected report type and date."}), 404                                        
         return jsonify({"data": data}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 500                                  
     finally:
         db.close()
 

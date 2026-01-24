@@ -14,16 +14,24 @@
     .total-boxes { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: nowrap; }
     .category-box { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 8px 12px; text-align: center; min-width: 80px; }
     .category-value { font-size: 1.4em; font-weight: 700; color: #fff; }
+    .flash-message {
+        animation: fadeOut 5s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { opacity: 0; display: none; }
+    }
 </style>
 
 <div class="mb-4 d-flex justify-content-between align-items-center">
-    <h2 class="fw-bold">Step 3: Delivery Transactions</h2>
-    <span class="badge bg-dark fs-6">Date: {{ stock_date }}</span>
+    <h2 class="fw-bold mb-0 border-bottom border-dark pb-2">Step 3: Delivery Transactions</h2>
+    <span class="badge bg-dark fs-6">Stock Date: {{ stock_date }}</span>
 </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}{% for category, message in messages %}
-      <div class="alert alert-{{ 'success' if category == 'success' else 'info' if category == 'info' else 'danger' }} shadow-sm flash-message">
+      <div class="alert alert-{{ 'success' if category == 'success' else 'info' if category == 'info' else 'danger' }} shadow-sm w-50 alert-dismissible fade show flash-message">
           {{ message }}
       </div>
     {% endfor %}{% endif %}
@@ -37,6 +45,7 @@
         <label class="form-check-label fw-bold text-primary" for="delNoMovCheck">
             <i class="bi bi-person-x-fill me-2"></i> No Deliveries Today
         </label>
+        <div class="small text-muted ms-5">Enable this if no deliveries were made today.</div>
     </div>
 
     <div id="tableSection" class="{% if no_movement or is_finalized or is_saved %}locked-overlay{% endif %}">
@@ -85,9 +94,9 @@
             {% if is_finalized %}
                 <div class="alert alert-secondary d-inline-block fw-bold shadow-sm mb-3"><i class="bi bi-lock-fill me-2"></i> Records Finalized</div>
             {% elif is_saved or no_movement %}
-                <div class="alert alert-success w-100 text-start fw-bold shadow-sm mb-3"><i class="bi bi-check-circle-fill me-2"></i> Transactions Confirmed.</div>
+                <div class="alert alert-success w-100 text-start fw-bold shadow-sm mb-3"><i class="bi bi-check-circle-fill me-2"></i>Delivery Transactions Confirmed for Today.</div>
                 <button type="button" class="btn btn-danger btn-lg px-4 fw-bold shadow mb-3" data-bs-toggle="modal" data-bs-target="#resetConfirmModal">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i> RESET
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> RESET &amp; RE-ENTER
                 </button>
             {% else %}
                 <button type="button" id="confirmAllBtn" class="btn btn-success btn-lg px-5 fw-bold shadow mb-3">CONFIRM TRANSACTIONS</button>
@@ -100,7 +109,7 @@
                 <div class="category-box"><div class="category-label">Refill</div><div class="category-value" id="totalRefill">0</div></div>
                 <div class="category-box"><div class="category-label">NC</div><div class="category-value" id="totalNC">0</div></div>
                 <div class="category-box"><div class="category-label">DBC</div><div class="category-value" id="totalDBC">0</div></div>
-                <div class="category-box"><div class="category-label">TV-Out</div><div class="category-value" id="totalTVOut">0</div></div>
+                <!-- <div class="category-box"><div class="category-label">TV-Out</div><div class="category-value" id="totalTVOut">0</div></div> -->
                 <div class="category-box" style="background: rgba(255,255,255,0.25); border: 2px solid rgba(255, 255, 255, 0.5);"><div class="category-label">Grand Total</div><div class="category-value" id="grandTotal">0</div></div>
             </div>
         </div>
@@ -115,8 +124,8 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body py-4 text-center">
-                <p class="fs-5 mb-0"><strong>Reset all entries?</strong></p>
-                <p class="text-muted">This will clear all quantities and enable editing again.</p>
+                <p class="fs-5 mb-0"><strong>Reset Confirmation?</strong></p>
+                <p class="text-muted">Are you sure you want to reset all delivery transactions entries?</p>
             </div>
             <div class="modal-footer justify-content-center border-0 bg-light">
                 <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
@@ -136,7 +145,7 @@
           <h5 class="modal-title fw-bold">Confirm Submission</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body py-4 text-center fs-5">Save all entries? This will sync with Step 4.</div>
+      <div class="modal-body py-4 text-center fs-5">Are you sure you want to confirm all delivery transactions?</div>
       <div class="modal-footer justify-content-center">
           <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
           <button type="button" id="confirmAllYes" class="btn btn-success px-4 fw-bold">Yes, Confirm</button>
@@ -153,19 +162,19 @@ document.addEventListener('DOMContentLoaded', function() {
     var form = document.getElementById('deliveryForm');
 
     function updateTotals() {
-        let totals = {R: 0, N: 0, D: 0, T: 0};
+        let totals = {R: 0, N: 0, D: 0};
         document.querySelectorAll('.del-input').forEach(i => {
             const val = parseInt(i.value) || 0;
             if (i.name.includes('_REFILL')) totals.R += val;
             else if (i.name.includes('_NC')) totals.N += val;
             else if (i.name.includes('_DBC')) totals.D += val;
-            else if (i.name.includes('_TVOUT')) totals.T += val;
+            //else if (i.name.includes('_TVOUT')) totals.T += val;
         });
         document.getElementById('totalRefill').textContent = totals.R;
         document.getElementById('totalNC').textContent = totals.N;
         document.getElementById('totalDBC').textContent = totals.D;
-        document.getElementById('totalTVOut').textContent = totals.T;
-        document.getElementById('grandTotal').textContent = totals.R + totals.N + totals.D + totals.T;
+        //document.getElementById('totalTVOut').textContent = totals.T;
+        document.getElementById('grandTotal').textContent = totals.R + totals.N + totals.D;
     }
 
     document.querySelectorAll('.del-input').forEach(i => i.addEventListener('input', updateTotals));

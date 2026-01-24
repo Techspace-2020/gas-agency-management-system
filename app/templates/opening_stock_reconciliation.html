@@ -15,13 +15,12 @@
     </a>
 </div> -->
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold mb-0">Step 1: Opening Stock Reconciliation</h2>
-    
+    <h2 class="fw-bold mb-0 border-bottom border-dark pb-2">Empty Cylinders Reconciliation</h2>
     <!-- Grouping Date and Button to keep them on the right -->
     <div class="d-flex align-items-center gap-3">
-        <span class="badge bg-dark p-2">Date: {{ stock_date }}</span>
+        <span class="badge bg-dark p-2"> Stock Date: {{ stock_date }}</span>
         <a href="{{ url_for('opening_stock.download_vehicle_report') }}" class="btn btn-outline-dark shadow-sm">
-            <i class="bi bi-download me-2"></i>Download Vehicle Stock Report
+            <i class="bi bi-download me-2"></i>Generate Vehicle Stock Report
         </a>
     </div>
 </div>
@@ -32,9 +31,9 @@
             <table class="table table-bordered align-middle mb-0">
                 <thead class="table-dark text-center">
                     <tr>
-                        <th class="text-start">Delivery Boy</th>
+                        <th class="text-center">Delivery Boy</th>
                         <th>Type</th>
-                        <th>Expected (Issues)</th>
+                        <th>Expected Issues</th>
                         <th>Previous Vehicle Stock</th>
                         <th style="width: 200px;">Actual Returned Today</th>
                     </tr>
@@ -42,7 +41,7 @@
                 <tbody>
                     {% for r in rows %}
                     <tr class="text-center">
-                        <td class="text-start"><strong>{{ r.delivery_boy }}</strong></td>
+                        <td class="text-success fw-bold"><strong>{{ r.delivery_boy }}</strong></td>
                         <td>{{ r.cylinder_type }}</td>
                         <td>{{ r.expected_empty }}</td>
                         <td class="text-primary fw-bold">{{ r.prev_vehicle_empty }}</td>
@@ -59,7 +58,7 @@
     </div>
     <div class="mt-4 d-flex gap-2">
         <button type="button" id="confirmAllBtn" class="btn btn-primary px-5 fw-bold shadow-sm">SAVE RECONCILIATION</button>
-        <a href="{{ url_for('opening_stock.summary_view') }}" class="btn btn-outline-secondary px-4">CANCEL</a>
+        <a href="{{ url_for('opening_stock.summary_view') }}" class="btn btn-outline-secondary px-4">BACK</a>
     </div>
 </form>
 

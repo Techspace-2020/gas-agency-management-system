@@ -4,17 +4,19 @@
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center gap-3">
-            <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary border-0 shadow-sm">
+            <!-- <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary border-0 shadow-sm">
                 <i class="bi bi-arrow-left-circle-fill me-1"></i> Dashboard
-            </a>
+            </a> -->
             <div>
                 <h2 class="fw-bold mb-0">Office Counter Sales & Inventory</h2>
                 <small class="text-muted">Manage stock movement and direct counter sales</small>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-3">
-            <span class="badge bg-primary px-3 py-2">Stock Date: {{ stock_date }}</span>
-
+        <div>
+            <span class="badge bg-dark px-3 py-2">Stock Date: {{ stock_date }}</span>
+        </div>
+        <!-- <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-dark px-3 py-2">Stock Date: {{ stock_date }}</span>
             {% if not is_finalized %}
             <button type="button" class="btn btn-danger fw-bold shadow-sm" onclick="showFinalizeConfirm()">
                 <i class="bi bi-snow2 me-1"></i> Finalize Office Sales
@@ -22,7 +24,7 @@
             {% else %}
             <span class="badge bg-secondary px-3 py-2"><i class="bi bi-lock-fill me-1"></i> SALES FROZEN</span>
             {% endif %}
-        </div>
+        </div> -->
     </div>
 
     {# --- Inventory Overview Table --- #}
@@ -42,9 +44,9 @@
                             <th rowspan="2" class="align-middle">Action</th>
                         </tr>
                         <tr class="small fw-bold">
-                            <th title="Previous Day Closing">Opn</th><th title="Received Today">Rcv</th><th>Sold</th><th>Bal</th>
-                            <th title="Previous Day Closing">Opn</th><th title="Received Today">Rcv</th><th>Sold</th><th>Bal</th>
-                            <th title="Previous Day Closing">Opn</th><th title="Received Today">Rcv</th><th>Sold</th><th>Bal</th>
+                            <th title="Previous Day Closing">Open</th><th title="Received Today">Rcv</th><th>Sold</th><th>Bal</th>
+                            <th title="Previous Day Closing">Open</th><th title="Received Today">Rcv</th><th>Sold</th><th>Bal</th>
+                            <th title="Previous Day Closing">Open</th><th title="Received Today">Rcv</th><th>Sold</th><th>Bal</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -90,6 +92,17 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+    <div>
+        <div>
+            {% if not is_finalized %}
+                <button type="button" id="confirmAllBtn" class="btn btn-primary btn-lg px-5 fw-bold shadow mb-3" onclick="showFinalizeConfirm()">CONFIRM OFFICE SALES</button>
+            {% else %}
+                <!-- <span class="badge bg-secondary btn-lg fw-bold w-50 px-3 py-2"><i class="bi bi-lock-fill me-2"></i> SALES FROZEN</span> -->
+                <div class="alert alert-secondary d-inline-block fw-bold shadow-sm mb-3"><i class="bi bi-lock-fill me-2"></i> SALES FROZEN</div>
+            {% endif %}
+            <div class="d-block"><a href="{{url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">BACK</a></div>
         </div>
     </div>
 </div>
@@ -150,7 +163,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Finalize</h5>
+                <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please Confirm </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4 text-center">
@@ -160,7 +173,7 @@
             <div class="modal-footer bg-light justify-content-center">
                 <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
                 <form action="{{ url_for('office_sales.finalize_office_sales') }}" method="POST" class="d-inline">
-                    <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Yes, Freeze Sales</button>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Yes, Confirm</button>
                 </form>
             </div>
         </div>
