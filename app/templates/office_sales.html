@@ -162,7 +162,7 @@
 <div class="modal fade" id="finalizeConfirmModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please Confirm </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -173,13 +173,12 @@
             <div class="modal-footer bg-light justify-content-center">
                 <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
                 <form action="{{ url_for('office_sales.finalize_office_sales') }}" method="POST" class="d-inline">
-                    <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Yes, Confirm</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">Yes, Confirm</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
-
 
 
 <script>

@@ -8,7 +8,7 @@
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}{% for category, message in messages %}
-        <div class="alert alert-{{ category }} shadow-sm mb-4">{{ message }}</div>
+        <div class="alert alert-{{ category }} shadow-sm w-50 mb-4">{{ message }}</div>
     {% endfor %}{% endif %}
 {% endwith %}
 
@@ -52,10 +52,17 @@
 
         <div class="mt-4">
             <!-- Changed type="submit" to type="button" and added an onclick handler to trigger our JS confirmation dialog -->
-            <button type="button" id="confirmAllBtn" class="btn btn-primary btn-lg px-5 fw-bold shadow"
-                    onclick="showConfirmationModal()" {% if is_locked %} disabled {% endif %}>
-                {% if is_locked %} <i class="bi bi-check-circle-fill me-2"></i>COLLECTION LOCKED {% else %} <i class="bi bi-save me-2"></i>SAVE COLLECTION {% endif %}
-            </button>
+            {% if is_locked %}
+                <div class="alert alert-success d-inline-block fw-bold shadow-sm mb-3"><i class="bi bi-check-circle-fill me-2"></i>Cash Collection Confirmed for Today.</div>
+                <button type="button" class="btn btn-danger btn-lg px-4 fw-bold shadow mb-3" data-bs-toggle="modal" data-bs-target="#resetConfirmModal">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> RESET &amp; RE-ENTER
+                </button>
+            {% else %}
+                <button type="button" id="confirmAllBtn" class="btn btn-primary btn-lg px-5 fw-bold shadow"
+                        onclick="showConfirmationModal()">
+                    <i class="bi bi-save me-2"></i>CONFIRM COLLECTION 
+                </button>
+            {% endif %}
         </div>
     </form>
 </div>
@@ -68,23 +75,45 @@
 
 <!-- Confirmation Modal Structure (Requires Bootstrap 5 JS/CSS for full functionality) -->
 <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
-    <div class="modal-dialog  modal-dialog-centered">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="confirmationModalLabel">Please Confirm</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body py-4">
-                <p class="fs-5 mb-0 text-center">
+            <div class="modal-body py-4 text-center">
+                <p class="fs-5 mb-0">
                     <strong>Confirm Cash Collection?</strong><br>
-                    Are you sure you want to save the cash and UPI collections?
-                    Please ensure all amounts are correct before confirming.
+                    <span class="text-muted">Are you sure you want to save the cash and UPI collections? Please ensure all amounts are correct before confirming.</span>
                 </p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
                 <!-- This button actually submits the form -->
-                <button type="button" class="btn btn-primary" onclick="submitForm()">Yes, Confirm</button>
+                <button type="button" class="btn btn-primary px-4 fw-bold" onclick="submitForm()">Yes, Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Confirmation Modal -->
+<div class="modal fade" id="resetConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold">Reset Confirmation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4 text-center">
+                <p class="fs-5 mb-0"><strong>Reset Confirmation?</strong></p>
+                <p class="text-muted">Are you sure you want to reset all cash collection entries?</p>
+            </div>
+            <div class="modal-footer justify-content-center border-0 bg-light">
+                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('cash_collection.collection_view') }}">
+                    <input type="hidden" name="reset_db" value="1">
+                    <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Yes, Reset</button>
+                </form>
             </div>
         </div>
     </div>

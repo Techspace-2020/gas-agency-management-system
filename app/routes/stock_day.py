@@ -57,6 +57,11 @@ def dashboard():
                 {"s_id": s_id}).scalar() == 1
             progress["finalized_stock"] = has_finalized and progress["deliveries"]
 
+            has_ofc_sales = db.execute(
+                text("SELECT COUNT(*) FROM office_counter_sales WHERE stock_day_id = :s_id"),
+                {"s_id": s_id}).scalar() > 0
+            progress["office_sales"] = has_ofc_sales and progress["deliveries"]
+
             has_exp = db.execute(text("SELECT COUNT(*) FROM delivery_expected_amount WHERE stock_day_id = :s_id"),
                                  {"s_id": s_id}).scalar() > 0
             progress["expected_cash"] = has_exp and progress["finalized_stock"]

@@ -16,12 +16,12 @@
 {# Status Notifications #}
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}{% for category, message in messages %}
-        <div class="alert alert-{{ category }} shadow-sm mb-4">{{ message }}</div>
+        <div class="alert alert-{{ category }} shadow-sm w-50 mb-4">{{ message }}</div>
     {% endfor %}{% endif %}
 {% endwith %}
 
 {% if is_updated %}
-<div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-4 p-3">
+<div class="alert alert-info border-0 shadow-sm d-flex align-items-centermb-4 p-3">
     <i class="bi bi-lock-fill fs-5 me-2 text-primary"></i>
     <div>
         <strong>Finalized:</strong> Connection fees and TV-Out refunds are office-handled. Delivery boys are only responsible for refill cash.
@@ -116,13 +116,13 @@
     </div>
     {% endif %}
 
-    <form method="POST">
+    <form method="POST" id="cash_settlement_form">
         {% if is_updated %}
             <button type="button" class="btn btn-secondary btn-lg px-5 fw-bold" disabled>
                 <i class="bi bi-shield-check me-2"></i>CASH RECORDS FINALIZED
             </button>
         {% else %}
-            <button type="submit" id="confirmAllBtn" class="btn btn-primary btn-lg px-5 fw-bold shadow"
+            <button type="button" id="confirmAllBtn" class="btn btn-primary btn-lg px-5 fw-bold shadow"
                     {% if not office_finalized %}disabled{% endif %}>
                 <i class="bi bi-save me-2"></i>CONFIRM CASH RECORDS
             </button>
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var confirmBtn = document.getElementById('confirmAllBtn');
     var confirmModal = new bootstrap.Modal(document.getElementById('confirmAllModal'));
     var confirmYes = document.getElementById('confirmAllYes');
-    var form = document.getElementById('ioclForm');
+    var form = document.getElementById('cash_settlement_form');
 
     if (confirmBtn) {
         confirmBtn.addEventListener('click', function() {

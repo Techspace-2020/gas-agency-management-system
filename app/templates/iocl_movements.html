@@ -76,7 +76,7 @@
             <table class="table table-bordered align-middle">
                 <thead class="table-dark text-center">
                     <tr>
-                        <th class="text-start">Cylinder Type</th>
+                        <th class="text-center">Cylinder Type</th>
                         <th>Item Receipt (Filled Received)</th>
                         <th>Item Return (Empty Returned)</th>
                     </tr>
@@ -84,7 +84,7 @@
                 <tbody>
                     {% for r in rows %}
                     <tr>
-                        <td class="fw-bold bg-light">{{ r.cylinder_type }}</td>
+                        <td class="text-center fw-bold bg-light">{{ r.cylinder_type }}</td>
                         <td>
                             <input type="number" name="receipt_{{ r.cylinder_type_id }}"
                                    class="form-control text-center iocl-input" value="{{ r.item_receipt }}"

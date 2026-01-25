@@ -41,7 +41,7 @@
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}{% for category, message in messages %}
-            <div class="alert alert-{{ category if category != 'error' else 'danger' }} shadow-sm flash-message">
+            <div class="alert alert-{{ category if category != 'error' else 'danger' }} shadow-sm w-50 alert-dismissible fade show flash-message">
                 {{ message }}
             </div>
         {% endfor %}{% endif %}
@@ -94,6 +94,10 @@
                 <h6 class="fw-bold text-info small mb-2">1. Office Counter Sales</h6>
                 {% if not progress['deliveries'] %}
                     <button class="btn btn-sm mt-auto btn-secondary disabled" style="opacity: 0.6;"><i class="bi bi-lock-fill me-1"></i> Locked</button>
+                {% elif progress['office_sales'] %}
+                    <a href="{{ url_for('office_sales.manage_office_sales') }}" class="btn btn-sm mt-auto btn-success">
+                        <i class="bi bi-check-lg me-1"></i> Completed office Sales
+                    </a>
                 {% else %}
                     <a href="{{ url_for('office_sales.manage_office_sales') }}" class="btn btn-sm mt-auto btn-info text-white">
                         <i class="bi bi-shop me-1"></i> Record Counter Sales

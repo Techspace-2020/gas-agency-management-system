@@ -35,19 +35,28 @@ def collection_view():
         ).fetchall()
         is_locked = len(saved_records) > 0
 
-        # 3. Handle POST (Saving Deposits)
-        if request.method == "POST" and not is_locked:
-            entities = db.execute(text("SELECT delivery_boy_id FROM delivery_boys")).fetchall()
-            for entity in entities:
-                cash = float(request.form.get(f"cash_{entity.delivery_boy_id}") or 0)
-                upi = float(request.form.get(f"upi_{entity.delivery_boy_id}") or 0)
-                db.execute(text("""
-                    INSERT INTO delivery_cash_deposit (stock_day_id, delivery_boy_id, cash_amount, upi_amount, total_deposited)
-                    VALUES (:s_id, :db_id, :cash, :upi, :total)
-                """), {"s_id": s_id, "db_id": entity.delivery_boy_id, "cash": cash, "upi": upi, "total": cash + upi})
-            db.commit()
-            flash("✅ Cash collection saved successfully.", "success")
-            return redirect(url_for("cash_collection.collection_view"))
+        # 3. Handle POST (Saving Deposits or Reset)
+        if request.method == "POST":
+            # --- RESET LOGIC (Allow reset even if locked) ---
+            if "reset_db" in request.form:
+                db.execute(text("DELETE FROM delivery_cash_deposit WHERE stock_day_id = :s_id"), {"s_id": s_id})
+                db.commit()
+                flash("✅ All cash collection records cleared successfully.", "info")
+                return redirect(url_for("cash_collection.collection_view"))
+            
+            # --- NORMAL SAVE LOGIC (Only if not locked) ---
+            if not is_locked:
+                entities = db.execute(text("SELECT delivery_boy_id FROM delivery_boys")).fetchall()
+                for entity in entities:
+                    cash = float(request.form.get(f"cash_{entity.delivery_boy_id}") or 0)
+                    upi = float(request.form.get(f"upi_{entity.delivery_boy_id}") or 0)
+                    db.execute(text("""
+                        INSERT INTO delivery_cash_deposit (stock_day_id, delivery_boy_id, cash_amount, upi_amount, total_deposited)
+                        VALUES (:s_id, :db_id, :cash, :upi, :total)
+                    """), {"s_id": s_id, "db_id": entity.delivery_boy_id, "cash": cash, "upi": upi, "total": cash + upi})
+                db.commit()
+                flash("✅ Cash collection saved successfully.", "success")
+                return redirect(url_for("cash_collection.collection_view"))
 
         # 4. Fetch Automatic Counter Sales Revenue
         office_counter_data = db.execute(text("""
