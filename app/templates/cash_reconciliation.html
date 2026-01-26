@@ -24,6 +24,8 @@
     </div>
 
     <form method="POST" id="reconciliationForm">
+        <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="table-responsive">
             <table class="table table-bordered align-middle text-end">
                 <thead class="table-dark text-center">

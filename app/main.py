@@ -1,7 +1,10 @@
 from flask import Flask
 from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import text
 from app.db.session import SessionLocal
+from dotenv import load_dotenv
+import os
 
 # Import the User class from your auth route file
 from app.routes.auth import auth_bp, User
@@ -18,10 +21,14 @@ from app.routes.cash_settlement import cash_settlement_bp
 from app.routes.cash_collection import cash_collection_bp
 from app.routes.cash_reconciliation import cash_reconciliation_bp
 from app.routes.office_sales import office_sales_bp
+load_dotenv()
 
 def create_app():
     app = Flask(__name__)
-    app.secret_key = "dev-secret-key"
+    app.secret_key = os.getenv("SECRET_KEY")
+    
+    # Enable CSRF protection
+    csrf = CSRFProtect(app)
 
     # 1. Initialize Flask-Login
     login_manager = LoginManager()

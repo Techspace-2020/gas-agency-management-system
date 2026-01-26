@@ -59,7 +59,8 @@
 
 <div class="card shadow-sm border-0 p-4 mb-4">
     <form method="POST" id="ioclForm">
-
+        <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {# NO MOVEMENT TOGGLE #}
         <div class="form-check form-switch mb-4 p-3 bg-light border rounded">
             <input class="form-check-input ms-0 me-3" type="checkbox" name="no_movement" id="noMovCheck"
@@ -144,6 +145,8 @@
             <div class="modal-footer justify-content-center border-0 bg-light">
                 <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
                 <form action="{{ url_for('iocl_movements.delete_movements') }}" method="POST">
+                    <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Yes, Reset</button>
                 </form>
             </div>

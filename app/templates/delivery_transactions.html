@@ -38,6 +38,8 @@
 {% endwith %}
 
 <form method="POST" id="deliveryForm">
+    <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-check form-switch mb-4 p-3 bg-light border rounded shadow-sm">
         <input class="form-check-input ms-0 me-3" type="checkbox" name="delivery_no_movement" id="delNoMovCheck"
                style="transform: scale(1.4);" {% if no_movement %}checked{% endif %}
@@ -130,6 +132,8 @@
             <div class="modal-footer justify-content-center border-0 bg-light">
                 <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
                 <form method="POST" action="{{ url_for('delivery_transactions.transactions_view') }}">
+                    <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="reset_db" value="1">
                     <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Yes, Reset</button>
                 </form>

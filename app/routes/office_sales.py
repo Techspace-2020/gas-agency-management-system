@@ -175,9 +175,9 @@ def download_office_report(day_id):
 
             # Header row
             data = [[
-                "Cylinder", "Opn Ref", "Rcv Ref", "Sld Ref", "Bal Ref",
-                "Opn NC", "Rcv NC", "Sld NC", "Bal NC",
-                "Opn DBC", "Rcv DBC", "Sld DBC", "Bal DBC", "Total Bal"
+                "Cylinder", "Open Refill", "Rcv Refill", "Sold Refill", "Bal Refill",
+                "Open NC", "Rcv NC", "Sold NC", "Bal NC",
+                "Open DBC", "Rcv DBC", "Sold DBC", "Bal DBC", "Total Bal"
             ]]
 
             # Data rows (No Grand Total added)

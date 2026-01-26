@@ -117,6 +117,8 @@
     {% endif %}
 
     <form method="POST" id="cash_settlement_form">
+        <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {% if is_updated %}
             <button type="button" class="btn btn-secondary btn-lg px-5 fw-bold" disabled>
                 <i class="bi bi-shield-check me-2"></i>CASH RECORDS FINALIZED

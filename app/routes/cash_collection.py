@@ -108,7 +108,7 @@ def download_collection_log(day_id):
             doc = SimpleDocTemplate(output, pagesize=letter)
             elements = []
             styles = getSampleStyleSheet()
-            elements.append(Paragraph(f"Actual Cash Collection Log", styles['Title']))
+            elements.append(Paragraph(f"Actual Cash Collection Report", styles['Title']))
             elements.append(Paragraph(f"Stock Date: {report_date}", styles['Normal']))
             elements.append(Spacer(1, 12))
             data = [["Delivery Boy", "Cash", "UPI", "Total"]]

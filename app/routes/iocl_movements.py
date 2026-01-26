@@ -120,8 +120,8 @@ def download_iocl_log(day_id):
         query = text("""
             SELECT 
                 t.code AS Cylinder_Type, 
-                s.item_receipt AS Inward_Receipts, 
-                s.item_return AS Outward_Returns
+                s.item_receipt AS Item_Receipts, 
+                s.item_return AS Item_Returns
             FROM daily_stock_summary s
             JOIN cylinder_types t ON s.cylinder_type_id = t.cylinder_type_id
             WHERE s.stock_day_id = :id AND (s.item_receipt > 0 OR s.item_return > 0)
@@ -141,9 +141,9 @@ def download_iocl_log(day_id):
             elements.append(Spacer(1, 12))
 
             # Table Data Preparation
-            data = [["Cylinder Type", "Inward Receipts", "Outward Returns"]]
+            data = [["Cylinder Type", "Item Receipts", "Item Returns"]]
             for row in results:
-                data.append([row.Cylinder_Type, str(row.Inward_Receipts), str(row.Outward_Returns)])
+                data.append([row.Cylinder_Type, str(row.Item_Receipts), str(row.Item_Returns)])
 
             # Table Styling
             t = Table(data, colWidths=[150, 120, 120])

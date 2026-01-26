@@ -3,6 +3,20 @@
 {% block title %}Start Work Day - Veena Indane{% endblock %}
 
 {% block content %}
+<!-- Welcome section just below header -->
+<div class="container-fluid bg-white border-bottom">
+    <div class="d-flex justify-content-between align-items-center ps-3 pe-4 py-3">
+        <h5 class="fw-bold m-0" style="color: rgb(240, 7, 7);">
+            WELCOME TO GAS AGENCY APPLICATION!
+        </h5>
+        {% if day %}
+            <span class="badge {% if is_day_closed %}bg-danger{% else %}bg-primary{% endif %} fs-6 py-2 px-3">
+                {{ day.status }} - {{ day.stock_date }}
+            </span>
+        {% endif %}
+    </div>
+</div>
+
 <div class="container py-5">
     <div class="text-center mb-5">
         <div class="mb-3">
@@ -26,6 +40,8 @@
                 <div class="card-body">
                     <h5 class="fw-bold text-center mb-4">Create New Working Day</h5>
                     <form method="POST">
+                        <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-4">
                             <label class="form-label fw-bold">Working Date</label>
                             <div class="input-group">

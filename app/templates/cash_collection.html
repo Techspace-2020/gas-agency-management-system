@@ -14,6 +14,8 @@
 
 <div class="card shadow-sm border-0 p-4 mb-4">
     <form method="POST" id="collectionForm">
+        <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="table-responsive">
             <table class="table table-bordered align-middle text-center">
                 <thead class="table-dark">
@@ -111,6 +113,8 @@
             <div class="modal-footer justify-content-center border-0 bg-light">
                 <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
                 <form method="POST" action="{{ url_for('cash_collection.collection_view') }}">
+                    <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="reset_db" value="1">
                     <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Yes, Reset</button>
                 </form>

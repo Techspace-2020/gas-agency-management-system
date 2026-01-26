@@ -87,6 +87,8 @@
                                     </button>
                                 {% else %}
                                     <form method="POST" id="toggleForm-{{ d.delivery_boy_id }}" style="display:inline;">
+                                        <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="action" value="toggle_status">
                                         <input type="hidden" name="boy_id" value="{{ d.delivery_boy_id }}">
                                         <input type="hidden" name="current_status" value="{{ d.is_active }}">                                    

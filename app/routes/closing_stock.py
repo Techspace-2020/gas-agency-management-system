@@ -166,17 +166,17 @@ def download_stock(day_id):
         query = text("""
             SELECT 
                 t.code AS Cylinder, 
-                s.opening_filled AS Op_Filled, 
-                s.opening_empty AS Op_Empty, 
-                s.item_receipt AS Inward, 
-                s.item_return AS Outward, 
+                s.opening_filled AS Open_Filled, 
+                s.opening_empty AS Open_Empty, 
+                s.item_receipt AS Item_receipt, 
+                s.item_return AS Item_return, 
                 s.sales_regular AS Sales, 
                 s.nc_qty AS NC,
                 s.dbc_qty AS DBC,
                 s.tv_out_qty AS TV_Out,
                 s.defective_empty_vehicle AS Defective,
-                s.closing_filled AS Cl_Filled, 
-                s.closing_empty AS Cl_Empty,
+                s.closing_filled AS Close_Filled, 
+                s.closing_empty AS Close_Empty,
                 s.total_stock AS Total_Stock
             FROM daily_stock_summary s 
             JOIN cylinder_types t ON s.cylinder_type_id = t.cylinder_type_id
@@ -198,11 +198,12 @@ def download_stock(day_id):
 
             # Table Header - 13 Columns
             data = [
-                ["Cylinder", "OpF", "OpE", "In", "Out", "Sale", "NC", "DBC", "TVO", "Def", "ClF", "ClE", "Total"]
+                ["Cylinder", "Open_Filled", "Open_Empty", "Item_receipt", "Item_return",
+                 "Sales", "NC", "DBC", "TV_Out", "Defective", "Close_Filled", "Close_Empty", "Total_Stock"]
             ]
             for r in results:
-                data.append([r.Cylinder, r.Op_Filled, r.Op_Empty, r.Inward, r.Outward,
-                             r.Sales, r.NC, r.DBC, r.TV_Out, r.Defective, r.Cl_Filled, r.Cl_Empty, r.Total_Stock])
+                data.append([r.Cylinder, r.Open_Filled, r.Open_Empty, r.Item_receipt, r.Item_return,
+                             r.Sales, r.NC, r.DBC, r.TV_Out, r.Defective, r.Close_Filled, r.Close_Empty, r.Total_Stock])
 
             # Formatting table
             t = Table(data)

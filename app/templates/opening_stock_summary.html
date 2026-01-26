@@ -51,6 +51,8 @@
     {% if not is_confirmed %}
         <div class="d-flex gap-2">
             <form id="confirmAllForm" action="{{ url_for('opening_stock.confirm_all_returned') }}" method="POST">
+                <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="button" id="confirmAllBtn" class="btn btn-primary btn-lg px-5 fw-bold shadow">CONFIRM ALL RETURNED</button>
             </form>
             <a href="{{ url_for('opening_stock.reconcile_view') }}" class="btn btn-warning btn-lg px-5 text-dark shadow">RECONCILE VEHICLES</a>

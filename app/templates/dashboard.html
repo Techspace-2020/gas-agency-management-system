@@ -92,9 +92,9 @@
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100 p-3 border-start border-4 border-info">
                 <h6 class="fw-bold text-info small mb-2">1. Office Counter Sales</h6>
-                {% if not progress['deliveries'] %}
+                {% if not progress['finalized_stock'] %}
                     <button class="btn btn-sm mt-auto btn-secondary disabled" style="opacity: 0.6;"><i class="bi bi-lock-fill me-1"></i> Locked</button>
-                {% elif progress['office_sales'] %}
+                {% elif progress['reconciled_cash'] %}
                     <a href="{{ url_for('office_sales.manage_office_sales') }}" class="btn btn-sm mt-auto btn-success">
                         <i class="bi bi-check-lg me-1"></i> Completed office Sales
                     </a>
@@ -244,10 +244,15 @@
         const formData = new FormData();
         formData.append('report_type', type);
         formData.append('selected_date', dateStr);
+        //Get the token from Jinja2
+        const csrfToken = "{{ csrf_token() }}"; // Injected from Flask
 
         fetch('/preview-report', {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
         })
         .then(async response => {
             const data = await response.json();
@@ -352,8 +357,8 @@
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = "{{ url_for('stock_day.generate_report') }}";
-
-        const fields = { 'report_type': type, 'selected_date': date, 'file_format': format };
+        // Add csrf token and other fields
+        const fields = { 'report_type': type, 'selected_date': date, 'file_format': format, 'csrf_token': "{{ csrf_token() }}" };
         for (const [key, value] of Object.entries(fields)) {
             const input = document.createElement('input');
             input.type = 'hidden';

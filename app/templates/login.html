@@ -59,6 +59,8 @@
                 {% endwith %}
 
                 <form method="POST" id="loginForm">
+                    <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label fw-bold text-secondary">Username</label>
                         <input type="text" id="username" name="username" class="form-control form-control-lg" placeholder="Enter username" required autofocus>

@@ -30,7 +30,7 @@ def dashboard():
         progress = {
             "opening_stock": False, "iocl_movements": False, "deliveries": False,
             "finalized_stock": False, "expected_cash": False, "cash_collection": False,
-            "reconciled_cash": False
+            "reconciled_cash": False, "office_sales": False
         }
 
         if day and not is_day_closed:
@@ -60,7 +60,7 @@ def dashboard():
             has_ofc_sales = db.execute(
                 text("SELECT COUNT(*) FROM office_counter_sales WHERE stock_day_id = :s_id"),
                 {"s_id": s_id}).scalar() > 0
-            progress["office_sales"] = has_ofc_sales and progress["deliveries"]
+            progress["office_sales"] = has_ofc_sales and progress["finalized_stock"]
 
             has_exp = db.execute(text("SELECT COUNT(*) FROM delivery_expected_amount WHERE stock_day_id = :s_id"),
                                  {"s_id": s_id}).scalar() > 0
@@ -245,6 +245,14 @@ def create_new_day():
     db = SessionLocal()
     try:
         today_val = date.today().isoformat()
+
+        day = db.execute(text("""
+            SELECT stock_day_id, stock_date, status, delivery_no_movement 
+            FROM stock_days ORDER BY stock_date DESC LIMIT 1
+        """)).fetchone()
+
+        is_day_closed = (day.status.upper() == 'CLOSED') if day else False
+
         last_day = db.execute(
             text("SELECT stock_day_id, stock_date FROM stock_days ORDER BY stock_date DESC LIMIT 1")).fetchone()
         next_available = (last_day.stock_date + timedelta(days=1)).isoformat() if last_day else today_val
@@ -294,6 +302,6 @@ def create_new_day():
             flash(f"New stock day for {selected_date} created successfully.", "success")
             return redirect(url_for('stock_day.dashboard'))
 
-        return render_template("create_stock_day.html", next_available_date=next_available, today=today_val)
+        return render_template("create_stock_day.html", next_available_date=next_available, today=today_val,day=day, is_day_closed=is_day_closed)
     finally:
         db.close()

@@ -86,6 +86,8 @@
 
     <!-- Added ID to Form for JavaScript access -->
     <form method="POST" class="mt-4" id="reconciliationForm">
+        <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {% if is_finalized %}
             <div class="d-grid">
                 <button type="button" class="btn btn-success w-50 btn-lg fw-bold shadow-sm" disabled>
