@@ -63,6 +63,8 @@
 
                 {% if not get_flashed_messages(category_filter=['success']) %}
                 <form method="POST">
+                    <!-- USE THIS: It does NOT require a 'form' variable from Python -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-2">
                         <label class="form-label fw-bold text-secondary small">Full Name</label>
                         <input type="text" name="full_name" class="form-control" placeholder="Enter full name" required>
