@@ -67,9 +67,13 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold text-secondary">Password</label>
-                        <input type="password" id="password" name="password" class="form-control form-control-lg" placeholder="Enter password" required>
+                            <div class="input-group">
+                                <input type="password" id="password" name="password" class="form-control form-control-lg" placeholder="Enter password" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="const p = document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password';">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
                     </div>
-
                     <div class="mb-4 form-check">
                         <input type="checkbox" class="form-check-input" id="rememberMe">
                         <label class="form-check-label small text-secondary fw-bold" for="rememberMe">Remember Me</label>
