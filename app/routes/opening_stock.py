@@ -47,10 +47,10 @@ def summary_view():
             ORDER BY 
                     CASE ct.code
                         WHEN '14.2KG' THEN 1
-                        WHEN '19KG' THEN 2
-                        WHEN '10KG' THEN 3
-                        WHEN '5KG BLUE' THEN 4
-                        WHEN '5KG RED' THEN 5
+                        WHEN '10KG' THEN 2
+                        WHEN '19KG' THEN 3
+                        WHEN '5KG RED' THEN 4
+                        WHEN '5KG BLUE' THEN 5
                         ELSE 6
                     END
         """), {"open_id": open_day.stock_day_id, "prev_id": prev_day.stock_day_id if prev_day else 0}).fetchall()

@@ -124,7 +124,7 @@ def transactions_view():
             text("SELECT delivery_boy_id, name FROM delivery_boys WHERE is_active = 1 ORDER BY name")).fetchall()
         types = db.execute(text("""
             SELECT cylinder_type_id, code as cylinder_type FROM cylinder_types
-            ORDER BY CASE code WHEN '14.2KG' THEN 1 WHEN '19KG' THEN 2 WHEN '10KG' THEN 3 WHEN '5KG BLUE' THEN 4 WHEN '5KG RED' THEN 5 ELSE 6 END
+            ORDER BY CASE code WHEN '14.2KG' THEN 1 WHEN '10KG' THEN 2 WHEN '19KG' THEN 3 WHEN '5KG RED' THEN 4 WHEN '5KG BLUE' THEN 5 ELSE 6 END
         """)).fetchall()
         issues_raw = db.execute(text("SELECT * FROM delivery_issues WHERE stock_day_id = :s_id"),
                                 {"s_id": s_id}).fetchall()
