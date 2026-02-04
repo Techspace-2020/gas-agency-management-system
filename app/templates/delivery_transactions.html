@@ -38,7 +38,6 @@
 {% endwith %}
 
 <form method="POST" id="deliveryForm">
-    <!-- USE THIS: It does NOT require a 'form' variable from Python -->
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-check form-switch mb-4 p-3 bg-light border rounded shadow-sm">
         <input class="form-check-input ms-0 me-3" type="checkbox" name="delivery_no_movement" id="delNoMovCheck"
@@ -111,13 +110,13 @@
                 <div class="category-box"><div class="category-label">Refill</div><div class="category-value" id="totalRefill">0</div></div>
                 <div class="category-box"><div class="category-label">NC</div><div class="category-value" id="totalNC">0</div></div>
                 <div class="category-box"><div class="category-label">DBC</div><div class="category-value" id="totalDBC">0</div></div>
-                <!-- <div class="category-box"><div class="category-label">TV-Out</div><div class="category-value" id="totalTVOut">0</div></div> -->
                 <div class="category-box" style="background: rgba(255,255,255,0.25); border: 2px solid rgba(255, 255, 255, 0.5);"><div class="category-label">Grand Total</div><div class="category-value" id="grandTotal">0</div></div>
             </div>
         </div>
     </div>
 </form>
 
+{# Modals and Scripts remain unchanged to preserve existing logic #}
 <div class="modal fade" id="resetConfirmModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -132,7 +131,6 @@
             <div class="modal-footer justify-content-center border-0 bg-light">
                 <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
                 <form method="POST" action="{{ url_for('delivery_transactions.transactions_view') }}">
-                    <!-- USE THIS: It does NOT require a 'form' variable from Python -->
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="reset_db" value="1">
                     <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Yes, Reset</button>
@@ -172,12 +170,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (i.name.includes('_REFILL')) totals.R += val;
             else if (i.name.includes('_NC')) totals.N += val;
             else if (i.name.includes('_DBC')) totals.D += val;
-            //else if (i.name.includes('_TVOUT')) totals.T += val;
         });
         document.getElementById('totalRefill').textContent = totals.R;
         document.getElementById('totalNC').textContent = totals.N;
         document.getElementById('totalDBC').textContent = totals.D;
-        //document.getElementById('totalTVOut').textContent = totals.T;
         document.getElementById('grandTotal').textContent = totals.R + totals.N + totals.D;
     }
 

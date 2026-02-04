@@ -91,12 +91,12 @@ def preview_report():
 
         if not report_type or not selected_date_str:
             return jsonify({"error": "Missing report type or date."}), 400
-                                         
+
         try:
             selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
         except ValueError:
             return jsonify({"error": "Invalid date format."}), 400
-                                         
+
         record = db.execute(text("SELECT stock_day_id, status FROM stock_days WHERE stock_date = :sd"),
                             {"sd": selected_date_str}).fetchone()
 
@@ -105,10 +105,10 @@ def preview_report():
 
         if record.status == 'OPEN' and report_type in ['stock', 'cash', 'delivery_issues', 'actual_cash']:
             return jsonify({"error": "This day is still OPEN. Finalize the day to view Summary Reports."}), 400
-                                         
+
         s_id = record.stock_day_id
         data = []
-                                                       
+
         if report_type == 'actual_cash':
             results = db.execute(text("""
                 SELECT 'Office Counter' AS Delivery_Boy, 
@@ -132,9 +132,10 @@ def preview_report():
                      "Total": f"{float(r.Total):.2f}"} for r in results]
 
         elif report_type == 'stock':
+            # REMOVED defective_empty_vehicle from query
             results = db.execute(text("""
                 SELECT t.code as Cylinder, s.opening_filled, s.opening_empty, s.item_receipt, s.item_return, s.sales_regular, 
-                       s.nc_qty, s.dbc_qty, s.tv_out_qty, s.defective_empty_vehicle, s.closing_filled, s.closing_empty, s.total_stock
+                       s.nc_qty, s.dbc_qty, s.tv_out_qty, s.closing_filled, s.closing_empty, s.total_stock
                 FROM daily_stock_summary s JOIN cylinder_types t ON s.cylinder_type_id = t.cylinder_type_id
                 WHERE s.stock_day_id = :s_id ORDER BY t.cylinder_type_id
             """), {"s_id": s_id}).fetchall()
@@ -169,7 +170,6 @@ def preview_report():
             """), {"s_id": s_id}).fetchall()
             data = [{"Cylinder": r.Cylinder, "Receipt": r.item_receipt, "Return": r.item_return} for r in results]
 
-        # --- UPDATED OFFICE SALES PREVIEW ---
         elif report_type == 'office_sales':
             results = db.execute(text("""
                 SELECT 
@@ -184,7 +184,6 @@ def preview_report():
                 ORDER BY t.cylinder_type_id
             """), {"s_id": s_id}).fetchall()
 
-            # Mapping keys to match the 14-column header in dashboard.html
             data = [{
                 "Cylinder": r.Cylinder,
                 "Opn Refill": r.opening_refill, "Rcv Refill": r.received_refill,
@@ -197,10 +196,10 @@ def preview_report():
             } for r in results]
 
         if not data:
-            return jsonify({"error": "No records found for the selected report type and date."}), 404                                        
+            return jsonify({"error": "No records found for the selected report type and date."}), 404
         return jsonify({"data": data}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500                                  
+        return jsonify({"error": str(e)}), 500
     finally:
         db.close()
 
@@ -260,26 +259,21 @@ def create_new_day():
         if request.method == "POST":
             selected_date = request.form.get("stock_date")
 
-            # --- Validation Logic Added Here ---
-            # Check if a stock day for the selected date already exists
             existing_day = db.execute(
                 text("SELECT stock_day_id FROM stock_days WHERE stock_date = :sd"),
                 {"sd": selected_date}
             ).fetchone()
 
             if existing_day:
-                # If it exists, flash an error message and redirect back to the creation page
                 flash(f"Error: A stock day for {selected_date} already exists.", "error")
                 return redirect(url_for('stock_day.create_new_day'))
-            # --- End of Validation Logic ---
 
             res = db.execute(
                 text("INSERT INTO stock_days (stock_date, status, delivery_no_movement) VALUES (:sd, 'OPEN', 0)"),
                 {"sd": selected_date})
             new_id = res.lastrowid
 
-            # Initializing office stock rows for all types
-            # generated columns (closing_xxx) are managed by MySQL
+            # Initializing office stock rows - logic remains intact
             db.execute(text("""
                 INSERT INTO office_counter_sales (
                     stock_day_id, cylinder_type_id, 
@@ -302,6 +296,7 @@ def create_new_day():
             flash(f"New stock day for {selected_date} created successfully.", "success")
             return redirect(url_for('stock_day.dashboard'))
 
-        return render_template("create_stock_day.html", next_available_date=next_available, today=today_val,day=day, is_day_closed=is_day_closed)
+        return render_template("create_stock_day.html", next_available_date=next_available, today=today_val, day=day,
+                               is_day_closed=is_day_closed)
     finally:
         db.close()

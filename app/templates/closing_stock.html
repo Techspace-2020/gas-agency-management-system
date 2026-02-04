@@ -51,7 +51,6 @@
                     <th colspan="2">IOCL Movement</th>
                     <th colspan="3">Deliveries</th>
                     <th>Inward</th>
-                    <th>Vehicle</th>
                     <th colspan="2" class="bg-primary text-white">Calculated Closing</th>
                     <th class="bg-warning text-dark">Total</th>
                 </tr>
@@ -60,7 +59,6 @@
                     <th>Item Receipt</th><th>Item Return</th>
                     <th>Refill</th><th>NC</th><th>DBC</th>
                     <th>TV-Out</th>
-                    <th>Defect</th>
                     <th class="bg-primary text-white">Filled</th>
                     <th class="bg-primary text-white">Empty</th>
                     <th class="bg-warning text-dark">Grand</th>
@@ -74,7 +72,6 @@
                     <td>{{ item.iocl.in }}</td><td>{{ item.iocl.out }}</td>
                     <td>{{ item.issues.reg }}</td><td>{{ item.issues.nc }}</td><td>{{ item.issues.dbc }}</td>
                     <td>{{ item.tv }}</td>
-                    <td class="text-danger fw-bold">{{ item.defective_v }}</td>
                     <td class="bg-light fw-bold text-success">{{ item.closing.f }}</td>
                     <td class="bg-light fw-bold text-danger">{{ item.closing.e }}</td>
                     <td class="bg-light fw-bold text-primary">{{ item.total_stock }}</td>
@@ -84,9 +81,7 @@
         </table>
     </div>
 
-    <!-- Added ID to Form for JavaScript access -->
     <form method="POST" class="mt-4" id="reconciliationForm">
-        <!-- USE THIS: It does NOT require a 'form' variable from Python -->
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {% if is_finalized %}
             <div class="d-grid">
@@ -95,7 +90,6 @@
                 </button>
             </div>
         {% else %}
-            <!-- Fixed the extra '>' syntax error in the button below -->
             <button type="button" id="confirmAllBtn" class="btn btn-primary btn-lg px-5 fw-bold shadow mb-3"
                     {% if not step3_done %}disabled{% endif %}>
                 {% if not step3_done %}
@@ -111,7 +105,6 @@
     </div>
 </div>
 
-<!-- BOOTSTRAP MODAL HTML (Needed for the popup) -->
 <div class="modal fade" id="confirmAllModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -135,17 +128,15 @@ document.addEventListener('DOMContentLoaded', function() {
     var confirmBtn = document.getElementById('confirmAllBtn');
     var confirmModalEl = document.getElementById('confirmAllModal');
     var confirmYes = document.getElementById('confirmAllYes');
-    var form = document.getElementById('reconciliationForm'); // Updated to match Form ID
+    var form = document.getElementById('reconciliationForm');
 
     if (confirmModalEl && confirmBtn) {
         var confirmModal = new bootstrap.Modal(confirmModalEl);
-        
-        // Handle Modal Trigger
+
         confirmBtn.addEventListener('click', function() {
             confirmModal.show();
         });
 
-        // Handle Actual Submission from Modal
         if (confirmYes) {
             confirmYes.addEventListener('click', function() {
                 confirmYes.disabled = true;
@@ -156,5 +147,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-
 {% endblock %}

@@ -40,7 +40,7 @@ def transactions_view():
                 flash("Locked: Reconciliation (Step 4) is complete.", "danger")
                 return redirect(url_for("delivery_transactions.transactions_view"))
 
-            # --- 1. RESET LOGIC (FIXED) ---
+            # --- 1. RESET LOGIC ---
             if "reset_db" in request.form:
                 # We ONLY delete delivery_issues.
                 # office_counter_sales is kept because it was initialized at Day Start.
@@ -62,7 +62,7 @@ def transactions_view():
             db.execute(text("UPDATE stock_days SET delivery_no_movement = :val WHERE stock_day_id = :s_id"),
                        {"val": no_mov_checked, "s_id": s_id})
 
-            # --- 2. NO MOVEMENT LOGIC (FIXED) ---
+            # --- 2. NO MOVEMENT LOGIC ---
             if no_mov_checked == 1:
                 # If there are no movements, we clear delivery_issues but PROTECT office_counter_sales
                 db.execute(text("DELETE FROM delivery_issues WHERE stock_day_id = :s_id"), {"s_id": s_id})
@@ -77,6 +77,7 @@ def transactions_view():
                         b_id, t_id, cat = parts[1], parts[2], parts[3]
                         if (b_id, t_id) not in data_map:
                             data_map[(b_id, t_id)] = {'r': 0, 'n': 0, 'd': 0, 'tv': 0}
+                        # Removed 'DEFECTIVE' from mapping as it's now handled under general returns
                         mapping = {'REFILL': 'r', 'NC': 'n', 'DBC': 'd', 'TVOUT': 'tv'}
                         if cat in mapping:
                             data_map[(b_id, t_id)][mapping[cat]] = qty
@@ -96,8 +97,6 @@ def transactions_view():
 
                         # --- 4. SYNC WITH OFFICE COUNTER SALES (OFFICE ID 11) ---
                         if str(b_id) == "11":
-                            # We update the received columns.
-                            # Note: The 'opening' columns were already set during Step 1 (Day Start).
                             db.execute(text("""
                                 UPDATE office_counter_sales 
                                 SET 
@@ -192,7 +191,7 @@ def download_delivery_log(day_id):
             doc.build(elements)
             output.seek(0)
             return send_file(output, download_name=f"Delivery_Transactions_{report_date}.pdf", as_attachment=True,
-                             mimetype='application/pdf')
+                               mimetype='application/pdf')
         else:
             df = pd.DataFrame([dict(row._mapping) for row in results])
             output = io.BytesIO()

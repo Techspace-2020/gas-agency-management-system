@@ -1,10 +1,11 @@
 import pandas as pd
-from flask import Blueprint, render_template, request, redirect, url_for, flash, Response,send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, Response, send_file
 from sqlalchemy import text
 from app.db.session import SessionLocal
 import io
 
 opening_stock_bp = Blueprint("opening_stock", __name__)
+
 
 # Helper to get current and previous days
 def get_stock_days(db):
@@ -15,17 +16,11 @@ def get_stock_days(db):
     curr = db.execute(text("SELECT stock_day_id, stock_date FROM stock_days WHERE status = 'OPEN' LIMIT 1")).fetchone()
     return prev, curr
 
+
 @opening_stock_bp.route("/opening-stock")
 def summary_view():
     db = SessionLocal()
     try:
-        open_day = db.execute(text("""
-            SELECT stock_day_id, stock_date 
-            FROM stock_days 
-            WHERE status = 'OPEN' 
-            ORDER BY stock_date DESC LIMIT 1
-        """)).fetchone()
-
         prev_day, open_day = get_stock_days(db)
         if not open_day:
             return "No Active Stock Day Found", 404
@@ -33,14 +28,13 @@ def summary_view():
         is_confirmed = bool(db.execute(text("SELECT 1 FROM daily_stock_summary WHERE stock_day_id = :id"),
                                        {"id": open_day.stock_day_id}).fetchone())
 
+        # UPDATED: Removed defective_empty_vehicle from SELECT and Total calculation
         rows = db.execute(text("""
             SELECT ct.code AS cylinder_type,
                 COALESCE(ods.opening_filled, pds.closing_filled, 0) AS opening_filled,
                 COALESCE(ods.opening_empty, pds.closing_empty, 0) AS opening_empty,
-                COALESCE(ods.defective_empty_vehicle, pds.defective_empty_vehicle, 0) AS defective_empty_vehicle,
                 (COALESCE(ods.opening_filled, pds.closing_filled, 0) + 
-                 COALESCE(ods.opening_empty, pds.closing_empty, 0) + 
-                 COALESCE(ods.defective_empty_vehicle, pds.defective_empty_vehicle, 0)) AS total_stock
+                 COALESCE(ods.opening_empty, pds.closing_empty, 0)) AS total_stock
             FROM cylinder_types ct
             LEFT JOIN daily_stock_summary ods ON ods.cylinder_type_id = ct.cylinder_type_id AND ods.stock_day_id = :open_id
             LEFT JOIN daily_stock_summary pds ON pds.cylinder_type_id = ct.cylinder_type_id AND pds.stock_day_id = :prev_id
@@ -55,9 +49,11 @@ def summary_view():
                     END
         """), {"open_id": open_day.stock_day_id, "prev_id": prev_day.stock_day_id if prev_day else 0}).fetchall()
 
-        return render_template("opening_stock_summary.html", rows=rows, is_confirmed=is_confirmed, stock_date=open_day.stock_date)
+        return render_template("opening_stock_summary.html", rows=rows, is_confirmed=is_confirmed,
+                               stock_date=open_day.stock_date)
     finally:
         db.close()
+
 
 @opening_stock_bp.route("/opening-stock/reconcile", methods=["GET", "POST"])
 def reconcile_view():
@@ -65,7 +61,6 @@ def reconcile_view():
     try:
         prev_day, open_day = get_stock_days(db)
         if request.method == "POST":
-            # Corrected Save Logic
             for key, value in request.form.items():
                 if key.startswith("actual_"):
                     parts = key.split("_")
@@ -90,23 +85,23 @@ def reconcile_view():
                         VALUES (:o, :b, :c, :v) ON DUPLICATE KEY UPDATE empty_qty = :v
                     """), {"o": open_day.stock_day_id, "b": b_id, "c": c_id, "v": new_v})
 
-            # Sync with summary table
+            # UPDATED: Merged Defective logic into opening_empty. defective_empty_vehicle is now hardcoded to 0.
             db.execute(text("""
                 INSERT INTO daily_stock_summary (stock_day_id, cylinder_type_id, opening_filled, opening_empty, defective_empty_vehicle)
                 SELECT :o, pds.cylinder_type_id, pds.closing_filled, 
-                    ((pds.closing_empty + pds.defective_empty_vehicle) - COALESCE(v.v_sum, 0)), 
-                    COALESCE(v.v_sum, 0)
+                    (pds.closing_empty - COALESCE(v.v_sum, 0)), 
+                    0
                 FROM daily_stock_summary pds
                 LEFT JOIN (
                     SELECT cylinder_type_id, SUM(empty_qty) as v_sum 
                     FROM delivery_vehicle_empty_stock WHERE stock_day_id = :o GROUP BY cylinder_type_id
                 ) v ON v.cylinder_type_id = pds.cylinder_type_id
                 WHERE pds.stock_day_id = :p
-                ON DUPLICATE KEY UPDATE defective_empty_vehicle = VALUES(defective_empty_vehicle), opening_empty = VALUES(opening_empty)
+                ON DUPLICATE KEY UPDATE defective_empty_vehicle = 0, opening_empty = VALUES(opening_empty)
             """), {"o": open_day.stock_day_id, "p": prev_day.stock_day_id})
 
             db.commit()
-            flash("Reconciliation saved successfully.", "success")
+            flash("Reconciliation saved successfully. Empty stocks adjusted.", "success")
             return redirect(url_for("opening_stock.summary_view"))
 
         # Fetch rows for UI
@@ -124,16 +119,16 @@ def reconcile_view():
     finally:
         db.close()
 
+
 @opening_stock_bp.route("/opening-stock/download-vehicle-report")
 def download_vehicle_report():
     db = SessionLocal()
     try:
-        # Check for open day
-        curr = db.execute(text("SELECT stock_day_id, stock_date FROM stock_days WHERE status = 'OPEN' LIMIT 1")).fetchone()
-        if not curr: 
+        curr = db.execute(
+            text("SELECT stock_day_id, stock_date FROM stock_days WHERE status = 'OPEN' LIMIT 1")).fetchone()
+        if not curr:
             return "No open day", 404
 
-        # Query for report data
         results = db.execute(text("""
             SELECT db.name AS delivery_boy, ct.code AS cylinder_type, v.empty_qty
             FROM delivery_vehicle_empty_stock v
@@ -143,23 +138,19 @@ def download_vehicle_report():
             ORDER BY db.name, ct.code
         """), {"s_id": curr.stock_day_id}).fetchall()
 
-        # Convert results to a list of dictionaries for Pandas
         data = [
-            {"Delivery Boy": row.delivery_boy, "Cylinder Type": row.cylinder_type, "Empty Qty in Vehicle": row.empty_qty} 
+            {"Delivery Boy": row.delivery_boy, "Cylinder Type": row.cylinder_type,
+             "Empty Qty in Vehicle": row.empty_qty}
             for row in results
         ]
         df = pd.DataFrame(data)
 
-        # Create an in-memory binary stream
         output = io.BytesIO()
-
-        # Write to Excel using pandas (engine 'xlsxwriter' is the 2026 standard for .xlsx)
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Vehicle Report')
-        
-        # Move pointer to the start of the stream
+
         output.seek(0)
-        return send_file(output, download_name=f"Vehicle_Stock_{curr.stock_date}.xlsx", as_attachment=True)
+        return send_file(output, download_name=f"Vehicle_Empty_Stock_{curr.stock_date}.xlsx", as_attachment=True)
     finally:
         db.close()
 
@@ -169,9 +160,10 @@ def confirm_all_returned():
     db = SessionLocal()
     try:
         prev_day, open_day = get_stock_days(db)
+        # UPDATED: Carry forward closing_empty directly. Set defective_empty_vehicle to 0.
         db.execute(text("""
             INSERT INTO daily_stock_summary (stock_day_id, cylinder_type_id, opening_filled, opening_empty, defective_empty_vehicle)
-            SELECT :o, cylinder_type_id, closing_filled, closing_empty, defective_empty_vehicle
+            SELECT :o, cylinder_type_id, closing_filled, closing_empty, 0
             FROM daily_stock_summary WHERE stock_day_id = :p
         """), {"o": open_day.stock_day_id, "p": prev_day.stock_day_id})
         db.commit()

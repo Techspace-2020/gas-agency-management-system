@@ -83,13 +83,12 @@ def closing_view():
             dbc = iss.total_dbc if iss else 0
             tv = iss.total_tv if iss else 0
 
-            # Reconciliation Formulas
+            # Reconciliation Formulas - UPDATED to exclude defective column
             calc_filled = (s.opening_filled or 0) + (s.item_receipt or 0) - (reg + nc + dbc)
             calc_empty = (s.opening_empty or 0) + reg + tv - (s.item_return or 0)
-            defective = s.defective_empty_vehicle or 0
 
-            # TOTAL STOCK = Filled + Empty + Defective
-            total_stock = calc_filled + calc_empty + defective
+            # TOTAL STOCK = Filled + Empty (Defective is merged into Empty)
+            total_stock = calc_filled + calc_empty
 
             display_data.append({
                 'cylinder_type_id': s.cylinder_type_id,
@@ -98,7 +97,6 @@ def closing_view():
                 'iocl': {'in': s.item_receipt, 'out': s.item_return},
                 'issues': {'reg': reg, 'nc': nc, 'dbc': dbc},
                 'tv': tv,
-                'defective_v': defective,
                 'closing': {'f': calc_filled, 'e': calc_empty},
                 'total_stock': total_stock
             })
@@ -123,7 +121,7 @@ def closing_view():
                         nc_qty = :nq, 
                         dbc_qty = :dq, 
                         tv_out_qty = :tvq,
-                        defective_empty_vehicle = :dev,
+                        defective_empty_vehicle = 0,
                         is_reconciled = 1
                     WHERE stock_day_id = :s_id AND cylinder_type_id = :ct_id
                 """), {
@@ -134,7 +132,6 @@ def closing_view():
                     "nq": item['issues']['nc'],
                     "dq": item['issues']['dbc'],
                     "tvq": item['tv'],
-                    "dev": item['defective_v'],
                     "s_id": s_id,
                     "ct_id": item['cylinder_type_id']
                 })
@@ -152,7 +149,6 @@ def closing_view():
         db.close()
 
 
-# UPDATED DOWNLOAD ROUTE SUPPORTING NC, DBC, AND FULL ORDER
 @closing_stock_bp.route("/download-stock/<int:day_id>")
 def download_stock(day_id):
     db = SessionLocal()
@@ -162,7 +158,7 @@ def download_stock(day_id):
                               {"id": day_id}).fetchone()
         report_date = day_info.stock_date if day_info else "Report"
 
-        # Explicit Query for the 13-column Report
+        # Explicit Query - Removed defective_empty_vehicle
         query = text("""
             SELECT 
                 t.code AS Cylinder, 
@@ -174,7 +170,6 @@ def download_stock(day_id):
                 s.nc_qty AS NC,
                 s.dbc_qty AS DBC,
                 s.tv_out_qty AS TV_Out,
-                s.defective_empty_vehicle AS Defective,
                 s.closing_filled AS Close_Filled, 
                 s.closing_empty AS Close_Empty,
                 s.total_stock AS Total_Stock
@@ -187,7 +182,6 @@ def download_stock(day_id):
 
         if file_format == 'pdf':
             output = io.BytesIO()
-            # Use landscape to fit 13 columns
             doc = SimpleDocTemplate(output, pagesize=landscape(letter))
             elements = []
             styles = getSampleStyleSheet()
@@ -196,16 +190,15 @@ def download_stock(day_id):
             elements.append(Paragraph(f"Stock Date: {report_date}", styles['Normal']))
             elements.append(Spacer(1, 12))
 
-            # Table Header - 13 Columns
+            # Table Header - 12 Columns (Removed Defective)
             data = [
                 ["Cylinder", "Open_Filled", "Open_Empty", "Item_receipt", "Item_return",
-                 "Sales", "NC", "DBC", "TV_Out", "Defective", "Close_Filled", "Close_Empty", "Total_Stock"]
+                 "Sales", "NC", "DBC", "TV_Out", "Close_Filled", "Close_Empty", "Total_Stock"]
             ]
             for r in results:
                 data.append([r.Cylinder, r.Open_Filled, r.Open_Empty, r.Item_receipt, r.Item_return,
-                             r.Sales, r.NC, r.DBC, r.TV_Out, r.Defective, r.Close_Filled, r.Close_Empty, r.Total_Stock])
+                             r.Sales, r.NC, r.DBC, r.TV_Out, r.Close_Filled, r.Close_Empty, r.Total_Stock])
 
-            # Formatting table
             t = Table(data)
             t.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#343a40")),
@@ -222,7 +215,6 @@ def download_stock(day_id):
             return send_file(output, download_name=f"Stock_Report_{report_date}.pdf", mimetype='application/pdf')
 
         else:
-            # Excel Generation - Ensures ordered columns
             df = pd.DataFrame([dict(row._mapping) for row in results])
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
