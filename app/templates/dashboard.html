@@ -214,9 +214,7 @@
     let statusModal;
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the modal after DOM is fully loaded
         statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
-        
         const dateInput = document.getElementById('selected_date');
         const todayStr = new Date().toISOString().split('T')[0];
         dateInput.setAttribute('max', todayStr);
@@ -244,27 +242,21 @@
         const formData = new FormData();
         formData.append('report_type', type);
         formData.append('selected_date', dateStr);
-        //Get the token from Jinja2
-        const csrfToken = "{{ csrf_token() }}"; // Injected from Flask
+        const csrfToken = "{{ csrf_token() }}";
 
         fetch('/preview-report', {
             method: 'POST',
             body: formData,
-            headers: {
-                'X-CSRFToken': csrfToken
-            }
+            headers: { 'X-CSRFToken': csrfToken }
         })
         .then(async response => {
             const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.error || "Server error.");
-            }
+            if (!response.ok) throw new Error(data.error || "Server error.");
             return data;
         })
         .then(res => {
             const header = document.getElementById('previewHeader');
             const body = document.getElementById('previewBody');
-
             header.innerHTML = '';
             body.innerHTML = '';
 
@@ -277,23 +269,16 @@
                 } else if (type === 'cash') {
                     keys = ["Delivery Boy", "Opening", "Expected", "Deposited", "Closing", "Status"];
                 } else if (type === 'stock') {
-                    keys = ["Cylinder", "Open Filled", "Open Empty", "Inward", "Outward", "Sales", "NC", "DBC", "TV Out", "Defective", "Close Filled", "Close Empty", "Total Stock"];
+                    // UPDATED: Removed "Defective" from keys
+                    keys = ["Cylinder", "Open Filled", "Open Empty", "Inward", "Outward", "Sales", "NC", "DBC", "TV Out", "Close Filled", "Close Empty", "Total Stock"];
                 } else if (type === 'office_sales') {
-                    // UPDATED: All 14 inventory tracking columns
-                    keys = [
-                        "Cylinder",
-                        "Open Refill", "Rcv Refill", "Sold Refill", "Bal Refill",
-                        "Open NC", "Rcv NC", "Sold NC", "Bal NC",
-                        "Open DBC", "Rcv DBC", "Sold DBC", "Bal DBC",
-                        "Total Bal"
-                    ];
+                    keys = ["Cylinder", "Open Refill", "Rcv Refill", "Sold Refill", "Bal Refill", "Open NC", "Rcv NC", "Sold NC", "Bal NC", "Open DBC", "Rcv DBC", "Sold DBC", "Bal DBC", "Total Bal"];
                 } else if (type === 'iocl_inward') {
                     keys = ["Cylinder", "Receipt", "Return"];
                 } else {
                     keys = Object.keys(res.data[0]);
                 }
 
-                // Render Header
                 keys.forEach(key => {
                     const th = document.createElement('th');
                     th.className = "text-uppercase small fw-bold py-2";
@@ -301,16 +286,14 @@
                     header.appendChild(th);
                 });
 
-                // Render Body
                 res.data.forEach(row => {
                     const tr = document.createElement('tr');
-
-                    // Specific mapping for Backend to Frontend keys
+                    // UPDATED: Removed mapping for "defective_empty_vehicle"
                     const dataMap = {
-                        "Op Filled": "opening_filled", "Op Empty": "opening_empty", "Inward": "item_receipt",
+                        "Open Filled": "opening_filled", "Open Empty": "opening_empty", "Inward": "item_receipt",
                         "Outward": "item_return", "Sales": "sales_regular", "NC": "nc_qty", "DBC": "dbc_qty",
-                        "TV Out": "tv_out_qty", "Defective": "defective_empty_vehicle",
-                        "Cl Filled": "closing_filled", "Cl Empty": "closing_empty", "Total Stock": "total_stock",
+                        "TV Out": "tv_out_qty", "Close Filled": "closing_filled",
+                        "Close Empty": "closing_empty", "Total Stock": "total_stock",
                         "Receipt": "item_receipt", "Return": "item_return"
                     };
 
@@ -321,7 +304,6 @@
                             td.innerText = val;
                             td.className = "fw-bold text-primary";
                         } else {
-                            // If key exists directly in row, use it, otherwise check dataMap
                             let val = row[key] !== undefined ? row[key] : (row[dataMap[key]] !== undefined ? row[dataMap[key]] : '0');
                             td.innerText = val;
                         }
@@ -348,16 +330,13 @@
     function triggerDownload(format) {
         const type = document.getElementById('report_type').value;
         const date = document.getElementById('selected_date').value;
-
         if (!type || !date) {
             showNotification("Please select both report type and date.", true);
             return;
         }
-
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = "{{ url_for('stock_day.generate_report') }}";
-        // Add csrf token and other fields
         const fields = { 'report_type': type, 'selected_date': date, 'file_format': format, 'csrf_token': "{{ csrf_token() }}" };
         for (const [key, value] of Object.entries(fields)) {
             const input = document.createElement('input');
