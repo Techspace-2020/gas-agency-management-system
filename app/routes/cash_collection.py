@@ -69,7 +69,7 @@ def collection_view():
 
         # 5. Prepare Display Data
         saved_map = {row.delivery_boy_id: row for row in saved_records}
-        display_entities = db.execute(text("SELECT delivery_boy_id, name FROM delivery_boys")).fetchall()
+        display_entities = db.execute(text("SELECT delivery_boy_id, name FROM delivery_boys order by name")).fetchall()
 
         return render_template("cash_collection.html",
                                stock_date=open_day.stock_date,
