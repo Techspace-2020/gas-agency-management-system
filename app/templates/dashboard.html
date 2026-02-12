@@ -27,7 +27,14 @@
         80% { opacity: 1; }
         100% { opacity: 0; display: none; }
     }
+    /* Style for new sidebar link */
+    .nav-link.active-report {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-left: 4px solid #0dcaf0;
+    }
 </style>
+
+{# Note: The sidebar is usually in base.html. Ensure you add the link there as well. #}
 
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -269,7 +276,7 @@
                 } else if (type === 'cash') {
                     keys = ["Delivery Boy", "Opening", "Expected", "Deposited", "Closing", "Status"];
                 } else if (type === 'stock') {
-                    // UPDATED: Removed "Defective" from keys
+                    // UPDATED: Defective is already merged into empty in your backend
                     keys = ["Cylinder", "Open Filled", "Open Empty", "Inward", "Outward", "Sales", "NC", "DBC", "TV Out", "Close Filled", "Close Empty", "Total Stock"];
                 } else if (type === 'office_sales') {
                     keys = ["Cylinder", "Open Refill", "Rcv Refill", "Sold Refill", "Bal Refill", "Open NC", "Rcv NC", "Sold NC", "Bal NC", "Open DBC", "Rcv DBC", "Sold DBC", "Bal DBC", "Total Bal"];
@@ -288,7 +295,6 @@
 
                 res.data.forEach(row => {
                     const tr = document.createElement('tr');
-                    // UPDATED: Removed mapping for "defective_empty_vehicle"
                     const dataMap = {
                         "Open Filled": "opening_filled", "Open Empty": "opening_empty", "Inward": "item_receipt",
                         "Outward": "item_return", "Sales": "sales_regular", "NC": "nc_qty", "DBC": "dbc_qty",

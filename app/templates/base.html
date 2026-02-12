@@ -55,8 +55,20 @@
                     <a href="{{ url_for('stock_day.dashboard') }}" class="{% if request.endpoint == 'stock_day.dashboard' %}active{% endif %}">
                         <i class="bi bi-speedometer2 me-2"></i> Dashboard
                     </a>
-                    <a href="/delivery-boys"><i class="bi bi-people me-2"></i> Delivery Boys</a>
-                    <a href="/cylinder-types"><i class="bi bi-box-seam me-2"></i> Cylinder Types</a>
+
+                    {# Updated to 'delivery_boys.delivery_boys' as suggested by Traceback #}
+                    <a href="{{ url_for('delivery_boys.delivery_boys') }}" class="{% if request.endpoint == 'delivery_boys.delivery_boys' %}active{% endif %}">
+                        <i class="bi bi-people me-2"></i> Delivery Boys
+                    </a>
+
+                    {# Updated to 'cylinder_types.cylinder_types' to match standard naming #}
+                    <a href="{{ url_for('cylinder_types.cylinder_types') }}" class="{% if request.endpoint == 'cylinder_types.cylinder_types' %}active{% endif %}">
+                        <i class="bi bi-box-seam me-2"></i> Cylinder Types
+                    </a>
+
+                    <a href="{{ url_for('reports.range_reports_view') }}" class="{% if request.endpoint == 'reports.range_reports_view' %}active{% endif %}">
+                        <i class="bi bi-graph-up-arrow me-2"></i> Range Reports
+                    </a>
 
                     <hr class="text-secondary mt-4">
                     <a href="{{ url_for('auth.logout') }}" class="text-danger mt-2">

@@ -42,18 +42,11 @@ def transactions_view():
 
             # --- 1. RESET LOGIC ---
             if "reset_db" in request.form:
-                # We ONLY delete delivery_issues.
-                # office_counter_sales is kept because it was initialized at Day Start.
                 db.execute(text("DELETE FROM delivery_issues WHERE stock_day_id = :s_id"), {"s_id": s_id})
-
-                # We reset the TV Out quantities in the summary as they depend on delivery_issues
                 db.execute(text("UPDATE daily_stock_summary SET tv_out_qty = 0 WHERE stock_day_id = :s_id"),
                            {"s_id": s_id})
-
-                # Reset the toggle status
                 db.execute(text("UPDATE stock_days SET delivery_no_movement = 0 WHERE stock_day_id = :s_id"),
                            {"s_id": s_id})
-
                 db.commit()
                 flash("Delivery transaction records cleared. Office sales were preserved.", "info")
                 return redirect(url_for("delivery_transactions.transactions_view"))
@@ -64,7 +57,6 @@ def transactions_view():
 
             # --- 2. NO MOVEMENT LOGIC ---
             if no_mov_checked == 1:
-                # If there are no movements, we clear delivery_issues but PROTECT office_counter_sales
                 db.execute(text("DELETE FROM delivery_issues WHERE stock_day_id = :s_id"), {"s_id": s_id})
                 db.execute(text("UPDATE daily_stock_summary SET tv_out_qty = 0 WHERE stock_day_id = :s_id"),
                            {"s_id": s_id})
@@ -77,14 +69,12 @@ def transactions_view():
                         b_id, t_id, cat = parts[1], parts[2], parts[3]
                         if (b_id, t_id) not in data_map:
                             data_map[(b_id, t_id)] = {'r': 0, 'n': 0, 'd': 0, 'tv': 0}
-                        # Removed 'DEFECTIVE' from mapping as it's now handled under general returns
                         mapping = {'REFILL': 'r', 'NC': 'n', 'DBC': 'd', 'TVOUT': 'tv'}
                         if cat in mapping:
                             data_map[(b_id, t_id)][mapping[cat]] = qty
 
                 for (b_id, t_id), q in data_map.items():
                     if t_id and (q['r'] > 0 or q['n'] > 0 or q['d'] > 0 or q['tv'] > 0):
-                        # --- 3. UPDATE DELIVERY ISSUES ---
                         db.execute(text("""
                             INSERT INTO delivery_issues 
                                 (stock_day_id, delivery_boy_id, cylinder_type_id, regular_qty, nc_qty, dbc_qty, tv_out_qty, delivery_source)
@@ -95,7 +85,6 @@ def transactions_view():
                         """), {"s_id": s_id, "b_id": b_id, "t_id": t_id, "r": q['r'], "n": q['n'], "d": q['d'],
                                "tv": q['tv']})
 
-                        # --- 4. SYNC WITH OFFICE COUNTER SALES (OFFICE ID 11) ---
                         if str(b_id) == "11":
                             db.execute(text("""
                                 UPDATE office_counter_sales 
@@ -125,12 +114,26 @@ def transactions_view():
             SELECT cylinder_type_id, code as cylinder_type FROM cylinder_types
             ORDER BY CASE code WHEN '14.2KG' THEN 1 WHEN '10KG' THEN 2 WHEN '19KG' THEN 3 WHEN '5KG RED' THEN 4 WHEN '5KG BLUE' THEN 5 ELSE 6 END
         """)).fetchall()
+
         issues_raw = db.execute(text("SELECT * FROM delivery_issues WHERE stock_day_id = :s_id"),
                                 {"s_id": s_id}).fetchall()
         issues = {(r.delivery_boy_id, r.cylinder_type_id): r for r in issues_raw}
+
+        # --- NEW: CALCULATE COLUMN-WISE GRAND TOTALS ---
+        column_totals = {}
+        for ct in types:
+            t_id = ct.cylinder_type_id
+            column_totals[t_id] = {
+                'reg': sum(r.regular_qty for r in issues_raw if r.cylinder_type_id == t_id),
+                'nc': sum(r.nc_qty for r in issues_raw if r.cylinder_type_id == t_id),
+                'dbc': sum(r.dbc_qty for r in issues_raw if r.cylinder_type_id == t_id),
+                'tv': sum(r.tv_out_qty for r in issues_raw if r.cylinder_type_id == t_id)
+            }
+
         is_saved = (len(issues_raw) > 0 or open_day.delivery_no_movement == 1)
 
         return render_template("delivery_transactions.html", boys=boys, types=types, issues=issues,
+                               column_totals=column_totals,  # Passed to frontend
                                is_saved=is_saved, no_movement=open_day.delivery_no_movement,
                                is_finalized=is_finalized, stock_date=open_day.stock_date)
     finally:
@@ -191,7 +194,7 @@ def download_delivery_log(day_id):
             doc.build(elements)
             output.seek(0)
             return send_file(output, download_name=f"Delivery_Transactions_{report_date}.pdf", as_attachment=True,
-                               mimetype='application/pdf')
+                             mimetype='application/pdf')
         else:
             df = pd.DataFrame([dict(row._mapping) for row in results])
             output = io.BytesIO()

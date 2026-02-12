@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Range Reports - Veena Indane{% endblock %}
+
+{% block content %}
+<style>
+    .report-card {
+        border-radius: 15px;
+        transition: transform 0.2s;
+    }
+    .report-card:hover {
+        transform: translateY(-5px);
+    }
+    .flash-message {
+        animation: fadeOut 5s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { opacity: 0; display: none; }
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <h2 class="fw-bold mb-0 border-bottom border-dark pb-2">Historical Range Reports</h2>
+        <a href="{{ url_for('stock_day.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+
+    {# Status Messages #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+            <div class="alert alert-{{ category }} shadow-sm w-50 alert-dismissible fade show flash-message">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+        {% endfor %}{% endif %}
+    {% endwith %}
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0 report-card p-4">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-4 text-primary">
+                        <i class="bi bi-calendar-range me-2"></i>Select Export Criteria
+                    </h5>
+
+                    <form action="{{ url_for('reports.generate_range_report') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">START DATE</label>
+                                <input type="date" name="start_date" class="form-control shadow-sm"
+                                       max="{{ today }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">END DATE</label>
+                                <input type="date" name="end_date" class="form-control shadow-sm"
+                                       max="{{ today }}" required>
+                            </div>
+
+                            <div class="col-12 mt-4">
+                                <label class="form-label small fw-bold text-muted">REPORT CATEGORY</label>
+                                <select name="report_category" class="form-select shadow-sm p-3" required>
+                                    <option value="" disabled selected>-- Choose what to export --</option>
+                                    <option value="stock">Cylinder Stock Summary (Opening/Closing/Receipts)</option>
+                                    <option value="delivery">Delivery Boy Performance (Refills/NC/DBC Issues)</option>
+                                    <option value="cash">Financial Trends (Settlement History/Pending Balances)</option>
+                                </select>
+                                <div class="form-text mt-2">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Data will be exported as an Excel (.xlsx) file with a dedicated sheet for the selected range.
+                                </div>
+                            </div>
+
+                            <div class="col-12 mt-5">
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg fw-bold shadow">
+                                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>GENERATE & DOWNLOAD REPORT
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-5 row g-3">
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded shadow-sm border-start border-4 border-primary">
+                        <h6 class="fw-bold small">Stock Analysis</h6>
+                        <p class="small text-muted mb-0">Track receipt vs sales trends to optimize ordering.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded shadow-sm border-start border-4 border-success">
+                        <h6 class="fw-bold small">Cash Auditing</h6>
+                        <p class="small text-muted mb-0">Review pending balances over time to ensure settlements.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded shadow-sm border-start border-4 border-warning">
+                        <h6 class="fw-bold small">DBC/NC Growth</h6>
+                        <p class="small text-muted mb-0">Monitor new connections and growth in specific cylinder types.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

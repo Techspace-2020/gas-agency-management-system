@@ -21,18 +21,22 @@ from app.routes.cash_settlement import cash_settlement_bp
 from app.routes.cash_collection import cash_collection_bp
 from app.routes.cash_reconciliation import cash_reconciliation_bp
 from app.routes.office_sales import office_sales_bp
+# NEW: Import for Range Reports
+from app.routes.reports import reports_bp
+
 load_dotenv()
+
 
 def create_app():
     app = Flask(__name__)
     app.secret_key = os.getenv("SECRET_KEY")
-    
+
     # Enable CSRF protection
     csrf = CSRFProtect(app)
 
     # 1. Initialize Flask-Login
     login_manager = LoginManager()
-    login_manager.login_view = 'auth.login' # Where to redirect if not logged in
+    login_manager.login_view = 'auth.login'  # Where to redirect if not logged in
     login_manager.login_message_category = "info"
     login_manager.init_app(app)
 
@@ -65,8 +69,11 @@ def create_app():
     app.register_blueprint(cash_reconciliation_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(office_sales_bp)
+    # NEW: Register the Reports Blueprint
+    app.register_blueprint(reports_bp)
 
     return app
+
 
 app = create_app()
 
