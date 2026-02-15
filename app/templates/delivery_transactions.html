@@ -109,10 +109,10 @@
                         <td class="text-start">GRAND TOTAL</td>
                         {% for ct in types %}
                             {% set col = column_totals.get(ct.cylinder_type_id) %}
-                            <td id="total_{{ ct.cylinder_type_id }}_REFILL">{{ col.reg if col else 0 }}</td>
-                            <td id="total_{{ ct.cylinder_type_id }}_NC">{{ col.nc if col else 0 }}</td>
-                            <td id="total_{{ ct.cylinder_type_id }}_DBC">{{ col.dbc if col else 0 }}</td>
-                            <td class="tvout-col" id="total_{{ ct.cylinder_type_id }}_TVOUT">{{ col.tv if col else 0 }}</td>
+                            <td id="total_{{ ct.cylinder_type_id }}_REFILL" class="text-primary fw-bold">{{ col.reg if col else 0 }}</td>
+                            <td id="total_{{ ct.cylinder_type_id }}_NC" class="text-primary fw-bold">{{ col.nc if col else 0 }}</td>
+                            <td id="total_{{ ct.cylinder_type_id }}_DBC" class="text-primary fw-bold">{{ col.dbc if col else 0 }}</td>
+                            <td class="tvout-col text-danger fw-bold" id="total_{{ ct.cylinder_type_id }}_TVOUT">{{ col.tv if col else 0 }}</td>
                         {% endfor %}
                     </tr>
                 </tfoot>

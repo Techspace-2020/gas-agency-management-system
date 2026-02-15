@@ -64,6 +64,38 @@ def generate_range_report():
             df = pd.DataFrame([dict(row._mapping) for row in results])
             sheet_name = "Delivery_Transactions"
 
+        elif report_category == 'office':
+            query = text("""
+                SELECT sd.stock_date AS Date, t.code AS Cylinder, 
+                       ofc.opening_refill AS Opening_Refill,ofc.received_refill AS Received_Refill, ofc.sold_refill AS Sold_Refill,ofc.closing_refill AS Closing_Refill,
+                       ofc.opening_nc AS Opening_NC,ofc.received_nc AS Received_NC, ofc.sold_nc AS Sold_NC,ofc.closing_nc AS Closing_NC,
+                       ofc.opening_dbc AS Opening_DBC,ofc.received_dbc AS Received_DBC, ofc.sold_dbc AS Sold_DBC,ofc.closing_dbc AS Closing_DBC,
+                       ofc.total_office_closing AS Total_Closing,
+                       ofc.cash_collected AS Cash_Collected,ofc.upi_collected AS UPI_Collected, ofc.total_amount AS Total_Collected
+                FROM office_counter_sales ofc
+                JOIN stock_days sd ON ofc.stock_day_id = sd.stock_day_id
+                JOIN cylinder_types t ON ofc.cylinder_type_id = t.cylinder_type_id
+                WHERE sd.stock_date BETWEEN :start AND :end
+                ORDER BY sd.stock_date DESC, t.cylinder_type_id ASC
+            """)
+            results = db.execute(query, {"start": start_date, "end": end_date}).fetchall()
+            df = pd.DataFrame([dict(row._mapping) for row in results])
+            sheet_name = "Office_Sales"
+
+        elif report_category == 'deposit':
+            query = text("""
+                SELECT sd.stock_date AS Date, b.name AS Delivery_Boy, 
+                       dcd.cash_amount AS Cash_Amount, dcd.upi_amount AS UPI_Amount, dcd.total_deposited AS Total_Deposited
+                FROM delivery_cash_deposit dcd
+                JOIN stock_days sd ON dcd.stock_day_id = sd.stock_day_id
+                JOIN delivery_boys b ON dcd.delivery_boy_id = b.delivery_boy_id
+                WHERE sd.stock_date BETWEEN :start AND :end
+                ORDER BY sd.stock_date DESC, b.name ASC
+            """)
+            results = db.execute(query, {"start": start_date, "end": end_date}).fetchall()
+            df = pd.DataFrame([dict(row._mapping) for row in results])
+            sheet_name = "Delivery_Deposits"
+
         # --- CATEGORY 3: CASH BALANCE TRENDS ---
         elif report_category == 'cash':
             query = text("""
